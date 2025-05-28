@@ -2,124 +2,248 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Clean AR Hello World</title>
+    <title>WebXR AR - No Markers Needed</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.3.2/three.js/build/ar-threejs.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
-        #info { position: absolute; top: 10px; left: 10px; color: white; z-index: 100; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #start-ar {
+            padding: 20px 40px;
+            font-size: 18px;
+            background: #00ff88;
+            color: black;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 20px;
+        }
+        #start-ar:hover {
+            background: #00cc66;
+        }
+        #start-ar:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        #info {
+            text-align: center;
+            max-width: 300px;
+            line-height: 1.5;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
-    <div id="info">Point camera at any flat surface</div>
+    <div id="info">
+        <h2>🚀 Modern AR Experience</h2>
+        <p>No markers needed! Just point your camera at any surface and tap to place objects.</p>
+        <button id="start-ar">Start AR Experience</button>
+        <div id="status">Checking AR support...</div>
+    </div>
 
     <script>
-        // Initialize Three.js scene
-        const scene = new THREE.Scene();
-        const camera = new THREE.Camera();
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        let scene, camera, renderer, reticle, hitTestSource, localSpace;
+        let arObjects = [];
 
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setClearColor(new THREE.Color('lightgrey'), 0);
-        document.body.appendChild(renderer.domElement);
+        const startButton = document.getElementById('start-ar');
+        const statusDiv = document.getElementById('status');
+        const infoDiv = document.getElementById('info');
 
-        // Initialize AR
-        const arToolkitSource = new THREEx.ArToolkitSource({
-            sourceType: 'webcam'
-        });
+        // Check if WebXR is supported
+        if ('xr' in navigator) {
+            navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+                if (supported) {
+                    statusDiv.textContent = '✅ AR Ready!';
+                    startButton.addEventListener('click', startAR);
+                } else {
+                    showFallback();
+                }
+            }).catch(() => {
+                showFallback();
+            });
+        } else {
+            showFallback();
+        }
 
-        const arToolkitContext = new THREEx.ArToolkitContext({
-            cameraParametersUrl: 'https://cdn.jsdelivr.net/npm/ar.js@3.3.2/data/data/camera_para.dat',
-            detectionMode: 'mono'
-        });
+        function showFallback() {
+            statusDiv.textContent = '⚠️ WebXR not supported - showing demo mode';
+            startButton.textContent = 'Start Demo (No AR)';
+            startButton.addEventListener('click', startDemo);
+        }
 
-        // Setup AR
-        arToolkitSource.init(() => {
-            setTimeout(() => {
-                onResize();
-            }, 2000);
-        });
+        async function startAR() {
+            try {
+                // Initialize Three.js
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-        arToolkitContext.init(() => {
-            camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
-        });
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.xr.enabled = true;
 
-        // Create a simple 3D object
-        const group = new THREE.Group();
+                document.body.appendChild(renderer.domElement);
+                infoDiv.style.display = 'none';
 
-        // Spinning cube
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshLambertMaterial({
-            color: 0x00ff88,
-            transparent: true,
-            opacity: 0.8
-        });
-        const cube = new THREE.Mesh(geometry, material);
-        cube.position.y = 0.5;
-        group.add(cube);
+                // Add lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
 
-        // Floating text (using simple geometry)
-        const textGeometry = new THREE.RingGeometry(0.2, 0.3, 8);
-        const textMaterial = new THREE.MeshBasicMaterial({ color: 0xff0088 });
-        const ring = new THREE.Mesh(textGeometry, textMaterial);
-        ring.position.set(0, 1.5, 0);
-        group.add(ring);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(0, 1, 1);
+                scene.add(directionalLight);
 
-        // Add some lighting
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(0, 1, 1);
-        group.add(light);
+                // Create reticle (targeting circle)
+                const reticleGeometry = new THREE.RingGeometry(0.15, 0.2, 32);
+                const reticleMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                reticle = new THREE.Mesh(reticleGeometry, reticleMaterial);
+                reticle.matrixAutoUpdate = false;
+                reticle.visible = false;
+                scene.add(reticle);
 
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
-        group.add(ambientLight);
+                // Start AR session
+                const session = await navigator.xr.requestSession('immersive-ar', {
+                    requiredFeatures: ['hit-test']
+                });
 
-        // Marker tracking (using kanji marker instead of hiro)
-        const markerRoot = new THREE.Group();
-        scene.add(markerRoot);
+                renderer.xr.setSession(session);
 
-        const arMarkerControls = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
-            type: 'pattern',
-            patternUrl: 'https://cdn.jsdelivr.net/npm/ar.js@3.3.2/data/data/patt.kanji'
-        });
+                // Set up hit testing
+                const referenceSpace = await session.requestReferenceSpace('local');
+                const viewerSpace = await session.requestReferenceSpace('viewer');
+                hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+                localSpace = referenceSpace;
 
-        markerRoot.add(group);
+                // Handle screen tap to place objects
+                session.addEventListener('select', onSelect);
 
-        // Animation loop
-        let time = 0;
-        function animate() {
-            requestAnimationFrame(animate);
+                renderer.setAnimationLoop(render);
 
-            time += 0.01;
-
-            // Animate the cube
-            cube.rotation.x = time;
-            cube.rotation.y = time * 0.7;
-
-            // Animate the ring
-            ring.rotation.z = time * 2;
-            ring.position.y = 1.5 + Math.sin(time * 3) * 0.2;
-
-            // Update AR
-            if (arToolkitSource.ready) {
-                arToolkitContext.update(arToolkitSource.domElement);
+            } catch (error) {
+                console.error('AR failed:', error);
+                statusDiv.textContent = '❌ AR failed - trying demo mode';
+                startDemo();
             }
+        }
+
+        function startDemo() {
+            // Fallback demo mode
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000011);
+
+            document.body.appendChild(renderer.domElement);
+            infoDiv.style.display = 'none';
+
+            // Add some demo objects
+            addDemoObjects();
+
+            // Simple orbit controls simulation
+            let time = 0;
+            function animate() {
+                time += 0.01;
+                camera.position.x = Math.sin(time) * 5;
+                camera.position.z = Math.cos(time) * 5;
+                camera.lookAt(0, 0, 0);
+
+                arObjects.forEach(obj => {
+                    obj.rotation.y += 0.02;
+                });
+
+                renderer.render(scene, camera);
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        function addDemoObjects() {
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(0, 1, 1);
+            scene.add(directionalLight);
+
+            // Add some colorful cubes
+            for (let i = 0; i < 5; i++) {
+                const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+                const material = new THREE.MeshLambertMaterial({
+                    color: new THREE.Color().setHSL(i / 5, 1, 0.5)
+                });
+                const cube = new THREE.Mesh(geometry, material);
+                cube.position.set((i - 2) * 1.5, 0, 0);
+                scene.add(cube);
+                arObjects.push(cube);
+            }
+        }
+
+        function onSelect() {
+            if (reticle.visible) {
+                // Create a new object at the reticle position
+                const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                const material = new THREE.MeshLambertMaterial({
+                    color: Math.random() * 0xffffff
+                });
+                const cube = new THREE.Mesh(geometry, material);
+                cube.position.setFromMatrixPosition(reticle.matrix);
+                cube.rotation.y = Math.random() * Math.PI * 2;
+                scene.add(cube);
+                arObjects.push(cube);
+            }
+        }
+
+        function render(timestamp, frame) {
+            if (frame && hitTestSource) {
+                const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+                if (hitTestResults.length > 0) {
+                    const hit = hitTestResults[0];
+                    const pose = hit.getPose(localSpace);
+
+                    reticle.visible = true;
+                    reticle.matrix.fromArray(pose.transform.matrix);
+                } else {
+                    reticle.visible = false;
+                }
+            }
+
+            // Animate existing objects
+            arObjects.forEach(obj => {
+                obj.rotation.y += 0.01;
+            });
 
             renderer.render(scene, camera);
         }
 
-        animate();
-
-        // Handle resize
-        function onResize() {
-            arToolkitSource.onResizeElement();
-            arToolkitSource.copyElementSizeTo(renderer.domElement);
-            if (arToolkitContext.arController !== null) {
-                arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas);
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
             }
-        }
-
-        window.addEventListener('resize', onResize);
+        });
     </script>
 </body>
 </html>
