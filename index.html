@@ -1,18 +1,125 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Hello AR.js</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.3.2/aframe/build/aframe-ar.js"></script>
-    <style>body { margin: 0; overflow: hidden; }</style>
-  </head>
-  <body>
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-      <a-marker preset="hiro">
-        <a-box position="0 0.5 0" material="color: #EF2D5E"></a-box>
-      </a-marker>
-      <a-entity camera></a-entity>
-    </a-scene>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <title>Clean AR Hello World</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.3.2/three.js/build/ar-threejs.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        #info { position: absolute; top: 10px; left: 10px; color: white; z-index: 100; }
+    </style>
+</head>
+<body>
+    <div id="info">Point camera at any flat surface</div>
+
+    <script>
+        // Initialize Three.js scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.Camera();
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setClearColor(new THREE.Color('lightgrey'), 0);
+        document.body.appendChild(renderer.domElement);
+
+        // Initialize AR
+        const arToolkitSource = new THREEx.ArToolkitSource({
+            sourceType: 'webcam'
+        });
+
+        const arToolkitContext = new THREEx.ArToolkitContext({
+            cameraParametersUrl: 'https://cdn.jsdelivr.net/npm/ar.js@3.3.2/data/data/camera_para.dat',
+            detectionMode: 'mono'
+        });
+
+        // Setup AR
+        arToolkitSource.init(() => {
+            setTimeout(() => {
+                onResize();
+            }, 2000);
+        });
+
+        arToolkitContext.init(() => {
+            camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
+        });
+
+        // Create a simple 3D object
+        const group = new THREE.Group();
+
+        // Spinning cube
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshLambertMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: 0.8
+        });
+        const cube = new THREE.Mesh(geometry, material);
+        cube.position.y = 0.5;
+        group.add(cube);
+
+        // Floating text (using simple geometry)
+        const textGeometry = new THREE.RingGeometry(0.2, 0.3, 8);
+        const textMaterial = new THREE.MeshBasicMaterial({ color: 0xff0088 });
+        const ring = new THREE.Mesh(textGeometry, textMaterial);
+        ring.position.set(0, 1.5, 0);
+        group.add(ring);
+
+        // Add some lighting
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(0, 1, 1);
+        group.add(light);
+
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        group.add(ambientLight);
+
+        // Marker tracking (using kanji marker instead of hiro)
+        const markerRoot = new THREE.Group();
+        scene.add(markerRoot);
+
+        const arMarkerControls = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
+            type: 'pattern',
+            patternUrl: 'https://cdn.jsdelivr.net/npm/ar.js@3.3.2/data/data/patt.kanji'
+        });
+
+        markerRoot.add(group);
+
+        // Animation loop
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+
+            time += 0.01;
+
+            // Animate the cube
+            cube.rotation.x = time;
+            cube.rotation.y = time * 0.7;
+
+            // Animate the ring
+            ring.rotation.z = time * 2;
+            ring.position.y = 1.5 + Math.sin(time * 3) * 0.2;
+
+            // Update AR
+            if (arToolkitSource.ready) {
+                arToolkitContext.update(arToolkitSource.domElement);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle resize
+        function onResize() {
+            arToolkitSource.onResizeElement();
+            arToolkitSource.copyElementSizeTo(renderer.domElement);
+            if (arToolkitContext.arController !== null) {
+                arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas);
+            }
+        }
+
+        window.addEventListener('resize', onResize);
+    </script>
+</body>
 </html>
