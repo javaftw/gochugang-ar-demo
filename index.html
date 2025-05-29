@@ -2,272 +2,229 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>AR Diagnostic</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Hello World</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            background: #1a1a1a;
-            color: white;
-            line-height: 1.6;
-        }
-        .status {
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-        .good { background: #2d5016; border-left: 4px solid #4caf50; }
-        .bad { background: #4a1e1e; border-left: 4px solid #f44336; }
-        .warning { background: #4a3a1e; border-left: 4px solid #ff9800; }
-        .info { background: #1e3a4a; border-left: 4px solid #2196f3; }
+        body { margin: 0; font-family: Arial, sans-serif; }
 
-        button {
-            padding: 15px 30px;
-            font-size: 16px;
+        #instructions {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        #switchMode {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             background: #00ff88;
             color: black;
             border: none;
+            padding: 12px 24px;
             border-radius: 8px;
+            font-size: 16px;
             cursor: pointer;
-            margin: 10px 0;
-            width: 100%;
-            max-width: 300px;
-        }
-        button:hover { background: #00cc66; }
-        button:disabled { background: #666; cursor: not-allowed; }
-
-        #videoPreview {
-            width: 100%;
-            max-width: 400px;
-            height: 300px;
-            background: #333;
-            border-radius: 8px;
-            margin: 20px 0;
+            z-index: 1000;
         }
 
-        .section {
-            margin: 30px 0;
-            padding: 20px;
-            background: #2a2a2a;
-            border-radius: 12px;
-        }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <h1>🔍 AR Diagnostic Tool</h1>
-
-    <div class="section">
-        <h2>System Check</h2>
-        <div id="systemStatus"></div>
+    <div id="instructions">
+        📱 Point your camera around to find flat surfaces, then tap to place objects!
     </div>
 
-    <div class="section">
-        <h2>Camera Test</h2>
-        <button id="testCamera">Test Camera Access</button>
-        <video id="videoPreview" autoplay muted playsinline style="display: none;"></video>
-        <div id="cameraStatus"></div>
-    </div>
+    <button id="switchMode">Switch to Marker Mode</button>
 
-    <div class="section">
-        <h2>AR Support Check</h2>
-        <button id="testAR">Test AR Support</button>
-        <div id="arStatus"></div>
-    </div>
+    <!-- Marker-free AR Scene -->
+    <a-scene
+        id="markerFreeScene"
+        embedded
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        vr-mode-ui="enabled: false"
+        gesture-detector
+        cursor="rayOrigin: mouse"
+    >
+        <!-- Assets -->
+        <a-assets>
+            <a-mixin id="animation-mixer" animation-mixer></a-mixin>
+        </a-assets>
 
-    <div class="section">
-        <h2>Solutions</h2>
-        <div id="solutions"></div>
-    </div>
+        <!-- Lighting -->
+        <a-light type="ambient" color="#404040"></a-light>
+        <a-light type="directional" position="0 1 1" color="#ffffff" intensity="0.8"></a-light>
+
+        <!-- AR Camera -->
+        <a-entity camera look-controls-enabled="false" arjs-look-controls="smoothingFactor: 0.1"></a-entity>
+    </a-scene>
+
+    <!-- Marker-based AR Scene -->
+    <a-scene
+        id="markerScene"
+        class="hidden"
+        embedded
+        arjs="sourceType: webcam; debugUIEnabled: false;"
+        vr-mode-ui="enabled: false"
+    >
+        <!-- Hiro Marker -->
+        <a-marker preset="hiro">
+            <!-- Spinning colorful cube -->
+            <a-box
+                position="0 0.5 0"
+                rotation="0 0 0"
+                scale="0.5 0.5 0.5"
+                material="color: #FF6B6B"
+                animation="property: rotation; to: 360 360 360; loop: true; dur: 4000">
+            </a-box>
+
+            <!-- Floating ring -->
+            <a-ring
+                position="0 1.5 0"
+                radius-inner="0.2"
+                radius-outer="0.4"
+                material="color: #4ECDC4; transparent: true; opacity: 0.8"
+                animation="property: rotation; to: 0 0 360; loop: true; dur: 2000">
+            </a-ring>
+
+            <!-- Pulsing sphere -->
+            <a-sphere
+                position="1 0.5 0"
+                radius="0.3"
+                material="color: #45B7D1; transparent: true; opacity: 0.7"
+                animation="property: scale; to: 1.2 1.2 1.2; dir: alternate; loop: true; dur: 1000">
+            </a-sphere>
+
+            <!-- Simple text -->
+            <a-text
+                value="Hello AR!"
+                position="0 2 0"
+                align="center"
+                color="#FFE66D"
+                scale="2 2 2">
+            </a-text>
+        </a-marker>
+
+        <!-- AR Camera -->
+        <a-entity camera></a-entity>
+    </a-scene>
 
     <script>
-        const systemStatus = document.getElementById('systemStatus');
-        const cameraStatus = document.getElementById('cameraStatus');
-        const arStatus = document.getElementById('arStatus');
-        const solutions = document.getElementById('solutions');
-        const testCameraBtn = document.getElementById('testCamera');
-        const testARBtn = document.getElementById('testAR');
-        const videoPreview = document.getElementById('videoPreview');
+        let isMarkerMode = false;
+        let placedObjects = 0;
 
-        // System checks
-        function checkSystem() {
-            let html = '';
+        const instructions = document.getElementById('instructions');
+        const switchBtn = document.getElementById('switchMode');
+        const markerFreeScene = document.getElementById('markerFreeScene');
+        const markerScene = document.getElementById('markerScene');
 
-            // HTTPS Check
-            if (location.protocol === 'https:' || location.hostname === 'localhost') {
-                html += '<div class="status good">✅ HTTPS: Secure connection detected</div>';
-            } else {
-                html += '<div class="status bad">❌ HTTPS: Not secure! AR requires HTTPS</div>';
+        // Object templates for marker-free mode
+        const objects = [
+            {
+                type: 'box',
+                color: '#FF6B6B',
+                animation: 'property: rotation; to: 360 360 360; loop: true; dur: 3000'
+            },
+            {
+                type: 'sphere',
+                color: '#4ECDC4',
+                animation: 'property: scale; to: 1.3 1.3 1.3; dir: alternate; loop: true; dur: 1500'
+            },
+            {
+                type: 'cylinder',
+                color: '#45B7D1',
+                animation: 'property: rotation; to: 0 360 0; loop: true; dur: 2000'
+            },
+            {
+                type: 'ring',
+                color: '#FFE66D',
+                animation: 'property: rotation; to: 360 0 360; loop: true; dur: 2500'
             }
+        ];
 
-            // Browser check
-            const userAgent = navigator.userAgent;
-            if (userAgent.includes('Chrome') || userAgent.includes('Firefox') || userAgent.includes('Safari')) {
-                html += '<div class="status good">✅ Browser: Compatible browser detected</div>';
+        // Switch between modes
+        switchBtn.addEventListener('click', () => {
+            isMarkerMode = !isMarkerMode;
+
+            if (isMarkerMode) {
+                markerFreeScene.classList.add('hidden');
+                markerScene.classList.remove('hidden');
+                instructions.innerHTML = '🎯 Point camera at this <a href="https://raw.githack.com/AR-js-org/AR.js/master/data/images/hiro.png" target="_blank" style="color:#00ff88;">HIRO marker</a> to see AR objects!';
+                switchBtn.textContent = 'Switch to Marker-Free Mode';
             } else {
-                html += '<div class="status warning">⚠️ Browser: Unknown compatibility</div>';
+                markerScene.classList.add('hidden');
+                markerFreeScene.classList.remove('hidden');
+                instructions.innerHTML = '📱 Point your camera around to find flat surfaces, then tap to place objects!';
+                switchBtn.textContent = 'Switch to Marker Mode';
             }
+        });
 
-            // Mobile check
-            if (/Mobi|Android/i.test(userAgent)) {
-                html += '<div class="status info">📱 Device: Mobile device detected</div>';
-            } else {
-                html += '<div class="status info">💻 Device: Desktop detected</div>';
-            }
+        // Add click/tap functionality for marker-free mode
+        document.addEventListener('click', (e) => {
+            if (isMarkerMode) return;
 
-            // WebRTC check
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                html += '<div class="status good">✅ WebRTC: Camera API available</div>';
-            } else {
-                html += '<div class="status bad">❌ WebRTC: Camera API not available</div>';
-            }
+            // Simple object placement (this is a basic implementation)
+            const scene = markerFreeScene;
+            const camera = scene.querySelector('[camera]');
 
-            systemStatus.innerHTML = html;
-        }
+            if (scene && camera) {
+                const objectData = objects[placedObjects % objects.length];
+                const entity = document.createElement('a-entity');
 
-        // Test camera access
-        testCameraBtn.addEventListener('click', async () => {
-            testCameraBtn.disabled = true;
-            testCameraBtn.textContent = 'Testing...';
-
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: 'environment' // Back camera
-                    }
+                // Set geometry
+                entity.setAttribute('geometry', {
+                    primitive: objectData.type,
+                    ...(objectData.type === 'ring' && {
+                        radiusInner: 0.2,
+                        radiusOuter: 0.4
+                    })
                 });
 
-                videoPreview.srcObject = stream;
-                videoPreview.style.display = 'block';
-                cameraStatus.innerHTML = '<div class="status good">✅ Camera access granted! You should see video above.</div>';
+                entity.setAttribute('material', {
+                    color: objectData.color,
+                    transparent: true,
+                    opacity: 0.8
+                });
 
-                // Stop the stream after 5 seconds to save battery
+                // Position in front of camera
+                const cameraEl = camera;
+                const position = new THREE.Vector3(0, 0, -2);
+                position.applyMatrix4(cameraEl.object3D.matrixWorld);
+
+                entity.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
+                entity.setAttribute('scale', '0.3 0.3 0.3');
+                entity.setAttribute('animation', objectData.animation);
+
+                scene.appendChild(entity);
+                placedObjects++;
+
+                // Update instructions
+                instructions.innerHTML = `📱 Object ${placedObjects} placed! Tap anywhere to place more objects.`;
+
+                // Clear instruction after 3 seconds
                 setTimeout(() => {
-                    stream.getTracks().forEach(track => track.stop());
-                    videoPreview.style.display = 'none';
-                    cameraStatus.innerHTML += '<div class="status info">ℹ️ Video stopped to save battery</div>';
-                }, 5000);
-
-            } catch (error) {
-                let message = '';
-                switch(error.name) {
-                    case 'NotAllowedError':
-                        message = '❌ Camera permission denied. Please allow camera access and try again.';
-                        break;
-                    case 'NotFoundError':
-                        message = '❌ No camera found on this device.';
-                        break;
-                    case 'NotSupportedError':
-                        message = '❌ Camera not supported in this browser.';
-                        break;
-                    default:
-                        message = `❌ Camera error: ${error.message}`;
-                }
-                cameraStatus.innerHTML = `<div class="status bad">${message}</div>`;
-            }
-
-            testCameraBtn.disabled = false;
-            testCameraBtn.textContent = 'Test Camera Access';
-        });
-
-        // Test AR support
-        testARBtn.addEventListener('click', async () => {
-            testARBtn.disabled = true;
-            testARBtn.textContent = 'Testing...';
-
-            let html = '';
-
-            // WebXR check
-            if ('xr' in navigator) {
-                try {
-                    const supported = await navigator.xr.isSessionSupported('immersive-ar');
-                    if (supported) {
-                        html += '<div class="status good">✅ WebXR AR: Fully supported!</div>';
-                    } else {
-                        html += '<div class="status warning">⚠️ WebXR AR: Not supported on this device</div>';
+                    if (!isMarkerMode) {
+                        instructions.innerHTML = '📱 Point your camera around and tap to place more objects!';
                     }
-                } catch (e) {
-                    html += '<div class="status warning">⚠️ WebXR AR: Error checking support</div>';
-                }
-            } else {
-                html += '<div class="status bad">❌ WebXR: Not available in this browser</div>';
+                }, 3000);
             }
-
-            // Device orientation check
-            if ('DeviceOrientationEvent' in window) {
-                html += '<div class="status good">✅ Device Orientation: Available</div>';
-            } else {
-                html += '<div class="status warning">⚠️ Device Orientation: Not available</div>';
-            }
-
-            arStatus.innerHTML = html;
-            testARBtn.disabled = false;
-            testARBtn.textContent = 'Test AR Support';
         });
 
-        // Generate solutions
-        function generateSolutions() {
-            let html = '<h3>Common Solutions:</h3>';
-
-            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-                html += `
-                    <div class="status bad">
-                        <strong>🔒 HTTPS Required</strong><br>
-                        AR apps need HTTPS. Try one of these:
-                        <ul>
-                            <li>Use GitHub Pages (free HTTPS hosting)</li>
-                            <li>Use CodePen, JSFiddle, or similar</li>
-                            <li>Use ngrok to tunnel localhost</li>
-                            <li>Test on localhost (some browsers allow it)</li>
-                        </ul>
-                    </div>
-                `;
-            }
-
-            html += `
-                <div class="status info">
-                    <strong>📱 For Mobile Users:</strong><br>
-                    <ul>
-                        <li>Make sure camera permission is granted</li>
-                        <li>Try Chrome on Android or Safari on iOS</li>
-                        <li>Close other apps that might use the camera</li>
-                        <li>Restart your browser if needed</li>
-                    </ul>
-                </div>
-
-                <div class="status info">
-                    <strong>🌐 Browser Recommendations:</strong><br>
-                    <ul>
-                        <li><strong>Android:</strong> Chrome (best AR support)</li>
-                        <li><strong>iOS:</strong> Safari (WebXR support varies)</li>
-                        <li><strong>Desktop:</strong> Chrome or Firefox</li>
-                    </ul>
-                </div>
-
-                <div class="status warning">
-                    <strong>🔧 Still not working?</strong><br>
-                    <ul>
-                        <li>Check browser console for errors (F12)</li>
-                        <li>Try in incognito/private mode</li>
-                        <li>Disable ad blockers temporarily</li>
-                        <li>Make sure your device has AR capabilities</li>
-                    </ul>
-                </div>
-            `;
-
-            solutions.innerHTML = html;
-        }
-
-        // Run initial checks
-        checkSystem();
-        generateSolutions();
-
-        // Log additional info to console
-        console.log('User Agent:', navigator.userAgent);
-        console.log('Location:', location.href);
-        console.log('Protocol:', location.protocol);
+        // Hide instructions after 10 seconds
+        setTimeout(() => {
+            instructions.style.opacity = '0.5';
+        }, 10000);
     </script>
 </body>
 </html>
