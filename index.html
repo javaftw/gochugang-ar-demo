@@ -13,9 +13,10 @@
             overflow: hidden;
             width: 100vw;
             height: 100vh;
+            position: relative;
         }
 
-        /* Fix AR.js camera scaling issues */
+        /* Fix AR.js camera scaling and positioning issues */
         #arjsDebugUIContainer {
             display: none !important;
         }
@@ -23,17 +24,37 @@
         a-scene {
             width: 100% !important;
             height: 100% !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
         }
 
         canvas {
             width: 100% !important;
             height: 100% !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            object-fit: cover !important;
         }
 
         video {
             width: 100% !important;
             height: 100% !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
             object-fit: cover !important;
+            transform: none !important;
+        }
+
+        /* Ensure AR.js container positioning */
+        .a-enter-vr, .a-enter-ar {
+            display: none !important;
+        }
+
+        [data-aframe-default-camera] {
+            transform: none !important;
         }
 
         #instructions {
@@ -288,7 +309,11 @@
                 if (video) {
                     video.style.width = '100%';
                     video.style.height = '100%';
+                    video.style.position = 'absolute';
+                    video.style.top = '0';
+                    video.style.left = '0';
                     video.style.objectFit = 'cover';
+                    video.style.transform = 'none';
                 }
             });
 
@@ -296,15 +321,23 @@
                 if (canvas) {
                     canvas.style.width = '100%';
                     canvas.style.height = '100%';
+                    canvas.style.position = 'absolute';
+                    canvas.style.top = '0';
+                    canvas.style.left = '0';
+                    canvas.style.objectFit = 'cover';
                 }
             });
 
-            // Force scene resize
+            // Force scene resize and repositioning
             const scenes = document.querySelectorAll('a-scene');
             scenes.forEach(scene => {
                 if (scene.renderer) {
                     scene.renderer.setSize(window.innerWidth, window.innerHeight);
                 }
+                // Reset any transforms
+                scene.style.position = 'absolute';
+                scene.style.top = '0';
+                scene.style.left = '0';
             });
         }
     </script>
