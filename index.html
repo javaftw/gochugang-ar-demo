@@ -3,18 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindAR - Modern Web AR</title>
-    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/dist/mindar-image.prod.js"></script>
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <title>MindAR + Three.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/dist/mindar-image-three.prod.js"></script>
     <style>
         body {
             margin: 0;
+            background: black;
+            color: white;
             font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
         }
 
         #instructions {
-            position: fixed;
+            position: absolute;
             top: 10px;
             left: 10px;
             right: 10px;
@@ -22,17 +30,19 @@
             color: white;
             padding: 15px;
             border-radius: 8px;
-            z-index: 1000;
+            z-index: 100;
             text-align: center;
             font-size: 14px;
         }
 
         #controls {
-            position: fixed;
+            position: absolute;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 1000;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
         }
 
         .control-btn {
@@ -43,123 +53,235 @@
             border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
-            margin: 0 5px;
+        }
+
+        .control-btn.secondary {
+            background: #4444ff;
+        }
+
+        .error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,0,0,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <div id="instructions">
-        🎯 Point camera at <a href="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png" target="_blank" style="color:#44ff44;">this image</a> to see AR!
+    <div id="container">
+        <div id="instructions">
+            🚀 Loading MindAR... Point camera at <a href="https://hiukim.github.io/mind-ar-js-doc/assets/card-example/card.png" target="_blank" style="color:#44ff44;">this card</a>
+        </div>
+
+        <div id="controls">
+            <button class="control-btn" onclick="addRandomObject()">Add Object</button>
+            <button class="control-btn secondary" onclick="clearObjects()">Clear All</button>
+        </div>
     </div>
-
-    <div id="controls">
-        <button class="control-btn" onclick="addObject()">Add Object</button>
-    </div>
-
-    <a-scene
-        mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind;"
-        color-space="sRGB"
-        renderer="colorManagement: true, physicallyCorrectLights"
-        vr-mode-ui="enabled: false"
-        device-orientation-permission-ui="enabled: false">
-
-        <a-assets>
-            <img id="card" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png" />
-        </a-assets>
-
-        <!-- Target anchor - objects appear here when image is detected -->
-        <a-entity id="target-anchor" mindar-image-target="targetIndex: 0">
-            <!-- Demo AR objects -->
-            <a-box
-                position="0 0 0.1"
-                scale="0.5 0.5 0.5"
-                material="color: #ff6b6b; transparent: true; opacity: 0.8"
-                animation="property: rotation; to: 0 360 0; loop: true; dur: 4000">
-            </a-box>
-
-            <a-sphere
-                position="0.7 0 0.1"
-                radius="0.3"
-                material="color: #4ecdc4; transparent: true; opacity: 0.7"
-                animation="property: position; to: 0.7 0.5 0.1; dir: alternate; loop: true; dur: 2000">
-            </a-sphere>
-
-            <a-cylinder
-                position="-0.7 0 0.1"
-                radius="0.2"
-                height="0.8"
-                material="color: #45b7d1; transparent: true; opacity: 0.8"
-                animation="property: rotation; to: 360 0 0; loop: true; dur: 3000">
-            </a-cylinder>
-
-            <a-text
-                value="MindAR Working!"
-                position="0 1 0.1"
-                align="center"
-                color="#ffe66d"
-                scale="2 2 2">
-            </a-text>
-        </a-entity>
-
-        <!-- Camera -->
-        <a-entity camera></a-entity>
-    </a-scene>
 
     <script>
-        let objectCount = 0;
-        let targetAnchor;
+        let mindarThree, scene, camera, renderer, anchor;
+        let objects = [];
+        let isTracking = false;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            targetAnchor = document.querySelector('#target-anchor');
+        async function start() {
+            try {
+                updateStatus('🚀 Initializing MindAR...');
 
-            // Update instructions when tracking starts/stops
-            targetAnchor.addEventListener('targetFound', () => {
-                document.getElementById('instructions').innerHTML = '✅ Image detected! AR objects should appear.';
-            });
+                // Initialize MindAR with Three.js
+                mindarThree = new window.MINDAR.IMAGE.MindARThree({
+                    container: document.getElementById('container'),
+                    imageTargetSrc: 'https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind'
+                });
 
-            targetAnchor.addEventListener('targetLost', () => {
-                document.getElementById('instructions').innerHTML = '🔍 Point camera at the target image to see AR objects.';
-            });
-        });
+                const { renderer: r, scene: s, camera: c } = mindarThree;
+                renderer = r;
+                scene = s;
+                camera = c;
 
-        function addObject() {
-            if (!targetAnchor) return;
+                // Add lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
 
-            const colors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff', '#44ffff'];
-            const shapes = ['box', 'sphere', 'cylinder', 'cone'];
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(1, 1, 1);
+                scene.add(directionalLight);
 
-            const color = colors[objectCount % colors.length];
-            const shape = shapes[objectCount % shapes.length];
+                // Create anchor point for AR objects
+                anchor = mindarThree.addAnchor(0);
 
-            // Create new entity
-            const entity = document.createElement('a-entity');
-            entity.setAttribute('geometry', `primitive: ${shape}; radius: 0.2; height: 0.4`);
-            entity.setAttribute('material', `color: ${color}; transparent: true; opacity: 0.8`);
+                // Add some default objects
+                addDefaultObjects();
 
-            // Random position around the target
-            const x = (Math.random() - 0.5) * 2;
-            const y = Math.random() * 0.5;
-            const z = 0.1 + Math.random() * 0.3;
+                // Handle tracking events
+                anchor.onTargetFound = () => {
+                    isTracking = true;
+                    updateStatus('✅ Image detected! AR objects should appear.');
+                };
 
-            entity.setAttribute('position', `${x} ${y} ${z}`);
-            entity.setAttribute('scale', '0.3 0.3 0.3');
-            entity.setAttribute('animation', 'property: rotation; to: 360 360 360; loop: true; dur: 4000');
-            entity.classList.add('added-object');
+                anchor.onTargetLost = () => {
+                    isTracking = false;
+                    updateStatus('🔍 Point camera at the target image to see AR.');
+                };
 
-            targetAnchor.appendChild(entity);
-            objectCount++;
+                updateStatus('📱 Starting camera...');
+                await mindarThree.start();
 
-            document.getElementById('instructions').innerHTML = `✅ ${objectCount} objects added! Point at target image to see them.`;
+                // Start render loop
+                renderer.setAnimationLoop(() => {
+                    // Animate objects
+                    objects.forEach(obj => {
+                        if (obj.userData.animation) {
+                            obj.userData.animation(obj);
+                        }
+                    });
+
+                    renderer.render(scene, camera);
+                });
+
+                updateStatus('🎯 Point camera at the target image!');
+
+            } catch (error) {
+                console.error('MindAR initialization error:', error);
+                showError('Failed to initialize AR: ' + error.message);
+            }
         }
 
-        // Log loading status
-        console.log('MindAR loading...');
+        function addDefaultObjects() {
+            // Spinning cube
+            const cubeGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+            const cubeMaterial = new THREE.MeshLambertMaterial({
+                color: 0xff6b6b,
+                transparent: true,
+                opacity: 0.8
+            });
+            const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            cube.position.set(0, 0, 0.1);
+            cube.userData.animation = (obj) => { obj.rotation.y += 0.02; };
 
-        // Handle any errors
-        window.addEventListener('error', (e) => {
-            console.error('Error:', e.error);
-            document.getElementById('instructions').innerHTML = '❌ Error loading AR. Check console for details.';
+            anchor.group.add(cube);
+            objects.push(cube);
+
+            // Bouncing sphere
+            const sphereGeometry = new THREE.SphereGeometry(0.15, 16, 16);
+            const sphereMaterial = new THREE.MeshLambertMaterial({
+                color: 0x4ecdc4,
+                transparent: true,
+                opacity: 0.7
+            });
+            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere.position.set(0.5, 0, 0.1);
+            sphere.userData.bounceDirection = 1;
+            sphere.userData.animation = (obj) => {
+                obj.position.y += 0.01 * obj.userData.bounceDirection;
+                if (obj.position.y > 0.3) obj.userData.bounceDirection = -1;
+                if (obj.position.y < 0) obj.userData.bounceDirection = 1;
+            };
+
+            anchor.group.add(sphere);
+            objects.push(sphere);
+
+            // Rotating cylinder
+            const cylinderGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.4, 16);
+            const cylinderMaterial = new THREE.MeshLambertMaterial({
+                color: 0x45b7d1,
+                transparent: true,
+                opacity: 0.8
+            });
+            const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+            cylinder.position.set(-0.5, 0.2, 0.1);
+            cylinder.userData.animation = (obj) => { obj.rotation.x += 0.03; };
+
+            anchor.group.add(cylinder);
+            objects.push(cylinder);
+        }
+
+        function addRandomObject() {
+            if (!anchor) return;
+
+            const geometries = [
+                new THREE.BoxGeometry(0.2, 0.2, 0.2),
+                new THREE.SphereGeometry(0.1, 12, 12),
+                new THREE.CylinderGeometry(0.05, 0.05, 0.3, 12),
+                new THREE.ConeGeometry(0.1, 0.3, 12)
+            ];
+
+            const colors = [0xff4444, 0x44ff44, 0x4444ff, 0xffff44, 0xff44ff, 0x44ffff];
+
+            const geometry = geometries[Math.floor(Math.random() * geometries.length)];
+            const material = new THREE.MeshLambertMaterial({
+                color: colors[Math.floor(Math.random() * colors.length)],
+                transparent: true,
+                opacity: 0.8
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+
+            // Random position
+            mesh.position.set(
+                (Math.random() - 0.5) * 1.5,
+                Math.random() * 0.5,
+                0.1 + Math.random() * 0.3
+            );
+
+            // Random animation
+            const animations = [
+                (obj) => { obj.rotation.y += 0.02; },
+                (obj) => { obj.rotation.x += 0.02; obj.rotation.z += 0.01; },
+                (obj) => {
+                    obj.scale.setScalar(1 + 0.2 * Math.sin(Date.now() * 0.005));
+                }
+            ];
+
+            mesh.userData.animation = animations[Math.floor(Math.random() * animations.length)];
+            mesh.userData.isUserAdded = true;
+
+            anchor.group.add(mesh);
+            objects.push(mesh);
+
+            updateStatus(`✅ Added object! Total: ${objects.filter(o => o.userData.isUserAdded).length + 3}`);
+        }
+
+        function clearObjects() {
+            // Remove user-added objects only
+            const userObjects = objects.filter(obj => obj.userData.isUserAdded);
+            userObjects.forEach(obj => {
+                anchor.group.remove(obj);
+                obj.geometry.dispose();
+                obj.material.dispose();
+            });
+
+            objects = objects.filter(obj => !obj.userData.isUserAdded);
+            updateStatus('🧹 Cleared user objects. Default objects remain.');
+        }
+
+        function updateStatus(message) {
+            document.getElementById('instructions').innerHTML = message;
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.innerHTML = `❌ ${message}<br><button onclick="location.reload()" style="margin-top: 10px; padding: 8px 16px; background: white; color: black; border: none; border-radius: 4px; cursor: pointer;">Retry</button>`;
+            document.body.appendChild(errorDiv);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (renderer && camera) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
         });
+
+        // Start the app
+        start();
     </script>
 </body>
 </html>
