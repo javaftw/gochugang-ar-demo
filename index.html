@@ -3,260 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual Camera AR</title>
+    <title>WebXR AR</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
+            margin: 0;
             background: black;
-            position: relative;
-        }
-
-        #videoContainer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        #cameraVideo {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transform: scaleX(-1); /* Mirror effect like selfie camera */
-        }
-
-        #arCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
-            pointer-events: none;
-        }
-
-        #controls {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            z-index: 10;
-            background: rgba(0,0,0,0.7);
             color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        #startButton {
+            padding: 20px 40px;
+            font-size: 20px;
+            background: #00ff88;
+            color: black;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin: 20px;
+            font-weight: bold;
+        }
+
+        #startButton:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin: 20px;
             padding: 15px;
-            border-radius: 10px;
-            text-align: center;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            max-width: 400px;
         }
 
-        #placeButton {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ff4444;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            font-size: 18px;
-            cursor: pointer;
-            z-index: 10;
-        }
+        .error { color: #ff4444; }
+        .success { color: #44ff44; }
+        .info { color: #4444ff; }
 
-        #switchCamera {
+        canvas {
             position: absolute;
-            bottom: 30px;
-            right: 30px;
-            background: #4444ff;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 15px;
-            font-size: 14px;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        .error {
-            background: rgba(255,0,0,0.8);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border-radius: 10px;
-            z-index: 100;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
     </style>
 </head>
 <body>
-    <div id="controls">
-        📱 Camera should be normal size now! Tap the red button to place 3D objects.
+    <div id="content">
+        <h1>🚀 WebXR AR</h1>
+        <div id="status">Checking AR support...</div>
+        <button id="startButton" disabled>Start AR</button>
+        <div style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
+            <p>This uses modern WebXR - no markers needed!</p>
+            <p>Tap screen to place objects on real surfaces</p>
+        </div>
     </div>
-
-    <div id="videoContainer">
-        <video id="cameraVideo" autoplay muted playsinline></video>
-    </div>
-
-    <canvas id="arCanvas"></canvas>
-
-    <button id="placeButton">Place Object</button>
-    <button id="switchCamera">Switch Camera</button>
 
     <script>
-        let video, canvas, renderer, scene, camera, objects = [];
-        let currentFacingMode = 'environment'; // Start with back camera
-        let stream = null;
+        let scene, camera, renderer, controller, reticle, hitTestSource, localSpace;
+        let arObjects = [];
 
-        async function initCamera() {
+        const startButton = document.getElementById('startButton');
+        const statusDiv = document.getElementById('status');
+        const contentDiv = document.getElementById('content');
+
+        // Check WebXR support
+        async function checkARSupport() {
+            if (!('xr' in navigator)) {
+                updateStatus('❌ WebXR not supported in this browser', 'error');
+                return false;
+            }
+
             try {
-                video = document.getElementById('cameraVideo');
-
-                // Stop existing stream if any
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
+                const supported = await navigator.xr.isSessionSupported('immersive-ar');
+                if (supported) {
+                    updateStatus('✅ WebXR AR supported! Ready to start.', 'success');
+                    startButton.disabled = false;
+                    startButton.addEventListener('click', startAR);
+                    return true;
+                } else {
+                    updateStatus('⚠️ WebXR AR not supported on this device', 'error');
+                    return false;
                 }
-
-                // Request camera with specific constraints
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: currentFacingMode,
-                        width: { ideal: 1280, max: 1920 },
-                        height: { ideal: 720, max: 1080 }
-                    },
-                    audio: false
-                });
-
-                video.srcObject = stream;
-
-                // Wait for video to be ready
-                return new Promise((resolve) => {
-                    video.onloadedmetadata = () => {
-                        console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
-                        resolve();
-                    };
-                });
-
             } catch (error) {
-                console.error('Camera error:', error);
-                showError('Camera access failed: ' + error.message);
+                updateStatus('❌ Error checking AR support: ' + error.message, 'error');
+                return false;
             }
         }
 
-        function initThreeJS() {
-            canvas = document.getElementById('arCanvas');
-
-            // Set canvas size
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
-            // Create Three.js scene
-            scene = new THREE.Scene();
-
-            // Create camera with proper aspect ratio
-            camera = new THREE.PerspectiveCamera(
-                70,
-                window.innerWidth / window.innerHeight,
-                0.1,
-                1000
-            );
-
-            // Create renderer
-            renderer = new THREE.WebGLRenderer({
-                canvas: canvas,
-                alpha: true,
-                antialias: true
-            });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-
-            // Add lighting
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-            scene.add(ambientLight);
-
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(1, 1, 1);
-            scene.add(directionalLight);
-
-            // Start render loop
-            animate();
+        function updateStatus(message, type = 'info') {
+            statusDiv.innerHTML = message;
+            statusDiv.className = type;
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
+        async function startAR() {
+            try {
+                updateStatus('🚀 Starting AR session...', 'info');
 
-            // Rotate objects
-            objects.forEach(obj => {
-                obj.rotation.x += 0.01;
-                obj.rotation.y += 0.02;
+                // Initialize Three.js
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.xr.enabled = true;
+                renderer.setClearColor(0x000000, 0);
+
+                document.body.appendChild(renderer.domElement);
+                contentDiv.style.display = 'none';
+
+                // Lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(0, 1, 1);
+                scene.add(directionalLight);
+
+                // Create reticle (targeting indicator)
+                const reticleGeometry = new THREE.RingGeometry(0.15, 0.2, 32);
+                const reticleMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                reticle = new THREE.Mesh(reticleGeometry, reticleMaterial);
+                reticle.matrixAutoUpdate = false;
+                reticle.visible = false;
+                scene.add(reticle);
+
+                // Start AR session
+                const session = await navigator.xr.requestSession('immersive-ar', {
+                    requiredFeatures: ['hit-test'],
+                    optionalFeatures: ['dom-overlay'],
+                    domOverlay: { root: document.body }
+                });
+
+                await renderer.xr.setSession(session);
+
+                // Set up reference spaces
+                const referenceSpace = await session.requestReferenceSpace('local');
+                const viewerSpace = await session.requestReferenceSpace('viewer');
+                hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+                localSpace = referenceSpace;
+
+                // Set up controller for screen taps
+                controller = renderer.xr.getController(0);
+                controller.addEventListener('select', onSelect);
+                scene.add(controller);
+
+                // Start render loop
+                renderer.setAnimationLoop(render);
+
+                updateStatus('✅ AR Active! Look around and tap to place objects', 'success');
+
+            } catch (error) {
+                console.error('AR startup error:', error);
+                updateStatus('❌ AR failed to start: ' + error.message, 'error');
+                contentDiv.style.display = 'block';
+            }
+        }
+
+        function onSelect() {
+            if (reticle.visible) {
+                // Create different objects
+                const objects = [
+                    () => new THREE.BoxGeometry(0.1, 0.1, 0.1),
+                    () => new THREE.SphereGeometry(0.05, 16, 16),
+                    () => new THREE.CylinderGeometry(0.05, 0.05, 0.1, 16),
+                    () => new THREE.ConeGeometry(0.05, 0.1, 16)
+                ];
+
+                const colors = [0xff4444, 0x44ff44, 0x4444ff, 0xffff44, 0xff44ff, 0x44ffff];
+
+                const geometry = objects[Math.floor(Math.random() * objects.length)]();
+                const material = new THREE.MeshLambertMaterial({
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+
+                // Position at reticle location
+                mesh.position.setFromMatrixPosition(reticle.matrix);
+                mesh.rotation.y = Math.random() * Math.PI * 2;
+
+                scene.add(mesh);
+                arObjects.push(mesh);
+
+                // Add spinning animation
+                mesh.userData.rotationSpeed = (Math.random() - 0.5) * 0.1;
+
+                console.log('Placed object #' + arObjects.length);
+            }
+        }
+
+        function render(timestamp, frame) {
+            if (frame) {
+                // Hit testing for surface detection
+                if (hitTestSource) {
+                    const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+                    if (hitTestResults.length > 0) {
+                        const hit = hitTestResults[0];
+                        const pose = hit.getPose(localSpace);
+
+                        if (pose) {
+                            reticle.visible = true;
+                            reticle.matrix.fromArray(pose.transform.matrix);
+                        }
+                    } else {
+                        reticle.visible = false;
+                    }
+                }
+            }
+
+            // Animate objects
+            arObjects.forEach(obj => {
+                if (obj.userData.rotationSpeed) {
+                    obj.rotation.y += obj.userData.rotationSpeed;
+                }
             });
 
             renderer.render(scene, camera);
-        }
-
-        function placeObject() {
-            const colors = [0xff4444, 0x44ff44, 0x4444ff, 0xffff44, 0xff44ff, 0x44ffff];
-            const shapes = ['box', 'sphere', 'cylinder'];
-
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            const shape = shapes[Math.floor(Math.random() * shapes.length)];
-
-            let geometry;
-            switch(shape) {
-                case 'sphere':
-                    geometry = new THREE.SphereGeometry(0.5, 16, 16);
-                    break;
-                case 'cylinder':
-                    geometry = new THREE.CylinderGeometry(0.3, 0.3, 1, 16);
-                    break;
-                default:
-                    geometry = new THREE.BoxGeometry(0.8, 0.8, 0.8);
-            }
-
-            const material = new THREE.MeshLambertMaterial({ color: color });
-            const object = new THREE.Mesh(geometry, material);
-
-            // Place object in front of camera
-            object.position.set(
-                (Math.random() - 0.5) * 4,
-                (Math.random() - 0.5) * 2,
-                -3 - Math.random() * 2
-            );
-
-            scene.add(object);
-            objects.push(object);
-
-            updateStatus(`Placed ${objects.length} objects! Camera working normally?`);
-        }
-
-        function switchCamera() {
-            currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-            updateStatus('Switching camera...');
-            initCamera();
-        }
-
-        function updateStatus(message) {
-            document.getElementById('controls').innerHTML = `📱 ${message}`;
-        }
-
-        function showError(message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error';
-            errorDiv.innerHTML = `❌ ${message}<br><button onclick="location.reload()">Retry</button>`;
-            document.body.appendChild(errorDiv);
         }
 
         // Handle window resize
@@ -265,29 +242,11 @@
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
-
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
             }
         });
 
-        // Event listeners
-        document.getElementById('placeButton').addEventListener('click', placeObject);
-        document.getElementById('switchCamera').addEventListener('click', switchCamera);
-
-        // Initialize everything
-        async function init() {
-            try {
-                await initCamera();
-                initThreeJS();
-                updateStatus('Camera should be normal size! Tap red button to place 3D objects.');
-            } catch (error) {
-                showError('Initialization failed: ' + error.message);
-            }
-        }
-
-        // Start the app
-        init();
+        // Initialize
+        checkARSupport();
     </script>
 </body>
 </html>
