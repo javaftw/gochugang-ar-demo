@@ -3,343 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Hello World</title>
+    <title>AR Camera Fix</title>
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
-        body {
+        * {
             margin: 0;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            position: relative;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        /* Fix AR.js camera scaling and positioning issues */
-        #arjsDebugUIContainer {
-            display: none !important;
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        #arjs-video {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            z-index: -1 !important;
+            transform: none !important;
         }
 
         a-scene {
-            width: 100% !important;
-            height: 100% !important;
-            position: absolute !important;
+            position: fixed !important;
             top: 0 !important;
             left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
         }
 
         canvas {
-            width: 100% !important;
-            height: 100% !important;
-            position: absolute !important;
+            position: fixed !important;
             top: 0 !important;
             left: 0 !important;
-            object-fit: cover !important;
-        }
-
-        video {
             width: 100% !important;
             height: 100% !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            object-fit: cover !important;
-            transform: none !important;
-        }
-
-        /* Ensure AR.js container positioning */
-        .a-enter-vr, .a-enter-ar {
-            display: none !important;
-        }
-
-        [data-aframe-default-camera] {
-            transform: none !important;
         }
 
         #instructions {
             position: fixed;
-            top: 10px;
-            left: 10px;
-            right: 10px;
+            top: 20px;
+            left: 20px;
+            right: 20px;
             background: rgba(0,0,0,0.8);
             color: white;
             padding: 15px;
-            border-radius: 8px;
-            z-index: 1000;
+            border-radius: 10px;
+            z-index: 100;
             text-align: center;
-            font-size: 14px;
         }
 
-        #switchMode {
+        #placeButton {
             position: fixed;
-            bottom: 20px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            background: #00ff88;
-            color: black;
+            background: #ff4444;
+            color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
             cursor: pointer;
-            z-index: 1000;
+            z-index: 100;
         }
-
-        .hidden { display: none !important; }
     </style>
 </head>
 <body>
     <div id="instructions">
-        📱 Point your camera around to find flat surfaces, then tap to place objects!
+        📱 Camera should be centered now. Tap the red button to place a cube!
     </div>
 
-    <button id="switchMode">Switch to Marker Mode</button>
+    <button id="placeButton">Place Cube</button>
 
-    <!-- Marker-free AR Scene -->
     <a-scene
-        id="markerFreeScene"
         embedded
         arjs="sourceType: webcam;
-              sourceWidth: 1280; sourceHeight: 960;
-              displayWidth: 1280; displayHeight: 960;
-              debugUIEnabled: false;
-              detectionMode: mono_and_matrix;
-              matrixCodeType: 3x3;
-              cameraParametersUrl: https://raw.githack.com/AR-js-org/AR.js/master/data/data/camera_para.dat;"
+              sourceWidth: 640; sourceHeight: 480;
+              displayWidth: 640; displayHeight: 480;
+              debugUIEnabled: false;"
         vr-mode-ui="enabled: false"
-        renderer="logarithmicDepthBuffer: true; colorManagement: true; sortObjects: true;"
-        gesture-detector
-        cursor="rayOrigin: mouse"
+        device-orientation-permission-ui="enabled: false"
     >
-        <!-- Assets -->
-        <a-assets>
-            <a-mixin id="animation-mixer" animation-mixer></a-mixin>
-        </a-assets>
+        <!-- Simple lighting -->
+        <a-light type="ambient" color="#fff" intensity="0.4"></a-light>
+        <a-light type="directional" position="0 1 1" color="#fff" intensity="0.6"></a-light>
 
-        <!-- Lighting -->
-        <a-light type="ambient" color="#404040"></a-light>
-        <a-light type="directional" position="0 1 1" color="#ffffff" intensity="0.8"></a-light>
-
-        <!-- AR Camera -->
-        <a-entity camera look-controls-enabled="false" arjs-look-controls="smoothingFactor: 0.1"></a-entity>
-    </a-scene>
-
-    <!-- Marker-based AR Scene -->
-    <a-scene
-        id="markerScene"
-        class="hidden"
-        embedded
-        arjs="sourceType: webcam;
-              sourceWidth: 1280; sourceHeight: 960;
-              displayWidth: 1280; displayHeight: 960;
-              debugUIEnabled: false;
-              cameraParametersUrl: https://raw.githack.com/AR-js-org/AR.js/master/data/data/camera_para.dat;"
-        vr-mode-ui="enabled: false"
-        renderer="logarithmicDepthBuffer: true; colorManagement: true; sortObjects: true;"
-    >
-        <!-- Hiro Marker -->
+        <!-- Marker -->
         <a-marker preset="hiro">
-            <!-- Spinning colorful cube -->
             <a-box
+                id="markerBox"
                 position="0 0.5 0"
-                rotation="0 0 0"
                 scale="0.5 0.5 0.5"
-                material="color: #FF6B6B"
-                animation="property: rotation; to: 360 360 360; loop: true; dur: 4000">
+                material="color: red"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 2000">
             </a-box>
-
-            <!-- Floating ring -->
-            <a-ring
-                position="0 1.5 0"
-                radius-inner="0.2"
-                radius-outer="0.4"
-                material="color: #4ECDC4; transparent: true; opacity: 0.8"
-                animation="property: rotation; to: 0 0 360; loop: true; dur: 2000">
-            </a-ring>
-
-            <!-- Pulsing sphere -->
-            <a-sphere
-                position="1 0.5 0"
-                radius="0.3"
-                material="color: #45B7D1; transparent: true; opacity: 0.7"
-                animation="property: scale; to: 1.2 1.2 1.2; dir: alternate; loop: true; dur: 1000">
-            </a-sphere>
-
-            <!-- Simple text -->
-            <a-text
-                value="Hello AR!"
-                position="0 2 0"
-                align="center"
-                color="#FFE66D"
-                scale="2 2 2">
-            </a-text>
         </a-marker>
 
-        <!-- AR Camera -->
-        <a-entity camera></a-entity>
+        <!-- Camera -->
+        <a-entity camera look-controls-enabled="false"></a-entity>
     </a-scene>
 
     <script>
-        let isMarkerMode = false;
-        let placedObjects = 0;
-
+        let cubeCount = 0;
         const instructions = document.getElementById('instructions');
-        const switchBtn = document.getElementById('switchMode');
-        const markerFreeScene = document.getElementById('markerFreeScene');
-        const markerScene = document.getElementById('markerScene');
+        const placeButton = document.getElementById('placeButton');
 
-        // Object templates for marker-free mode
-        const objects = [
-            {
-                type: 'box',
-                color: '#FF6B6B',
-                animation: 'property: rotation; to: 360 360 360; loop: true; dur: 3000'
-            },
-            {
-                type: 'sphere',
-                color: '#4ECDC4',
-                animation: 'property: scale; to: 1.3 1.3 1.3; dir: alternate; loop: true; dur: 1500'
-            },
-            {
-                type: 'cylinder',
-                color: '#45B7D1',
-                animation: 'property: rotation; to: 0 360 0; loop: true; dur: 2000'
-            },
-            {
-                type: 'ring',
-                color: '#FFE66D',
-                animation: 'property: rotation; to: 360 0 360; loop: true; dur: 2500'
-            }
-        ];
-
-        // Switch between modes
-        switchBtn.addEventListener('click', () => {
-            isMarkerMode = !isMarkerMode;
-
-            if (isMarkerMode) {
-                markerFreeScene.classList.add('hidden');
-                markerScene.classList.remove('hidden');
-                instructions.innerHTML = '🎯 Point camera at this <a href="https://raw.githack.com/AR-js-org/AR.js/master/data/images/hiro.png" target="_blank" style="color:#00ff88;">HIRO marker</a> to see AR objects!';
-                switchBtn.textContent = 'Switch to Marker-Free Mode';
-            } else {
-                markerScene.classList.add('hidden');
-                markerFreeScene.classList.remove('hidden');
-                instructions.innerHTML = '📱 Point your camera around to find flat surfaces, then tap to place objects!';
-                switchBtn.textContent = 'Switch to Marker Mode';
-            }
-        });
-
-        // Add click/tap functionality for marker-free mode
-        document.addEventListener('click', (e) => {
-            if (isMarkerMode) return;
-
-            // Simple object placement (this is a basic implementation)
-            const scene = markerFreeScene;
-            const camera = scene.querySelector('[camera]');
-
-            if (scene && camera) {
-                const objectData = objects[placedObjects % objects.length];
-                const entity = document.createElement('a-entity');
-
-                // Set geometry
-                entity.setAttribute('geometry', {
-                    primitive: objectData.type,
-                    ...(objectData.type === 'ring' && {
-                        radiusInner: 0.2,
-                        radiusOuter: 0.4
-                    })
-                });
-
-                entity.setAttribute('material', {
-                    color: objectData.color,
-                    transparent: true,
-                    opacity: 0.8
-                });
-
-                // Position in front of camera
-                const cameraEl = camera;
-                const position = new THREE.Vector3(0, 0, -2);
-                position.applyMatrix4(cameraEl.object3D.matrixWorld);
-
-                entity.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
-                entity.setAttribute('scale', '0.3 0.3 0.3');
-                entity.setAttribute('animation', objectData.animation);
-
-                scene.appendChild(entity);
-                placedObjects++;
-
-                // Update instructions
-                instructions.innerHTML = `📱 Object ${placedObjects} placed! Tap anywhere to place more objects.`;
-
-                // Clear instruction after 3 seconds
-                setTimeout(() => {
-                    if (!isMarkerMode) {
-                        instructions.innerHTML = '📱 Point your camera around and tap to place more objects!';
-                    }
-                }, 3000);
-            }
-        });
-
-        // Hide instructions after 10 seconds
+        // Force fix video positioning after everything loads
         setTimeout(() => {
-            instructions.style.opacity = '0.5';
-        }, 10000);
+            fixVideoPosition();
+        }, 1000);
 
-        // Fix camera aspect ratio on load
-        window.addEventListener('load', () => {
-            setTimeout(fixCameraAspect, 1000);
-        });
+        setTimeout(() => {
+            fixVideoPosition();
+        }, 3000);
 
-        // Handle orientation changes
-        window.addEventListener('orientationchange', () => {
-            setTimeout(fixCameraAspect, 500);
-        });
+        function fixVideoPosition() {
+            console.log('Attempting to fix video position...');
 
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            setTimeout(fixCameraAspect, 200);
-        });
-
-        function fixCameraAspect() {
+            // Find the AR.js video element
             const videos = document.querySelectorAll('video');
+            console.log('Found videos:', videos.length);
+
+            videos.forEach((video, index) => {
+                console.log(`Video ${index}:`, video);
+                video.style.cssText = `
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
+                    z-index: -1 !important;
+                    transform: none !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                `;
+            });
+
+            // Fix canvas positioning too
             const canvases = document.querySelectorAll('canvas');
-
-            videos.forEach(video => {
-                if (video) {
-                    video.style.width = '100%';
-                    video.style.height = '100%';
-                    video.style.position = 'absolute';
-                    video.style.top = '0';
-                    video.style.left = '0';
-                    video.style.objectFit = 'cover';
-                    video.style.transform = 'none';
-                }
-            });
-
-            canvases.forEach(canvas => {
-                if (canvas) {
-                    canvas.style.width = '100%';
-                    canvas.style.height = '100%';
-                    canvas.style.position = 'absolute';
-                    canvas.style.top = '0';
-                    canvas.style.left = '0';
-                    canvas.style.objectFit = 'cover';
-                }
-            });
-
-            // Force scene resize and repositioning
-            const scenes = document.querySelectorAll('a-scene');
-            scenes.forEach(scene => {
-                if (scene.renderer) {
-                    scene.renderer.setSize(window.innerWidth, window.innerHeight);
-                }
-                // Reset any transforms
-                scene.style.position = 'absolute';
-                scene.style.top = '0';
-                scene.style.left = '0';
+            canvases.forEach((canvas, index) => {
+                console.log(`Canvas ${index}:`, canvas);
+                canvas.style.cssText = `
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    z-index: 1 !important;
+                `;
             });
         }
+
+        // Button to place cubes in camera view
+        placeButton.addEventListener('click', () => {
+            const scene = document.querySelector('a-scene');
+            const cube = document.createElement('a-box');
+
+            cubeCount++;
+            const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+            const color = colors[cubeCount % colors.length];
+
+            cube.setAttribute('position', `${(Math.random()-0.5)*4} ${Math.random()*2+0.5} ${-2-Math.random()*2}`);
+            cube.setAttribute('scale', '0.3 0.3 0.3');
+            cube.setAttribute('material', `color: ${color}`);
+            cube.setAttribute('animation', 'property: rotation; to: 360 360 360; loop: true; dur: 3000');
+
+            scene.appendChild(cube);
+
+            instructions.innerHTML = `📱 Cube ${cubeCount} placed! ${cubeCount < 3 ? 'Try placing more!' : 'Looking good!'}`;
+        });
+
+        // Multiple attempts to fix positioning
+        window.addEventListener('load', () => {
+            setTimeout(fixVideoPosition, 500);
+            setTimeout(fixVideoPosition, 1500);
+            setTimeout(fixVideoPosition, 3000);
+        });
+
+        // Watch for new video elements being added
+        const observer = new MutationObserver(() => {
+            setTimeout(fixVideoPosition, 100);
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        // Log what we find for debugging
+        setTimeout(() => {
+            console.log('=== DEBUG INFO ===');
+            console.log('Videos found:', document.querySelectorAll('video').length);
+            console.log('Canvases found:', document.querySelectorAll('canvas').length);
+            console.log('Window size:', window.innerWidth, 'x', window.innerHeight);
+
+            document.querySelectorAll('video').forEach((v, i) => {
+                console.log(`Video ${i} position:`, v.getBoundingClientRect());
+            });
+        }, 2000);
     </script>
 </body>
 </html>
