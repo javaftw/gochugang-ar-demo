@@ -2,251 +2,246 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebXR AR</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Clean AR.js</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
-        body {
+        html, body {
             margin: 0;
-            background: black;
-            color: white;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            text-align: center;
-        }
-
-        #startButton {
-            padding: 20px 40px;
-            font-size: 20px;
-            background: #00ff88;
-            color: black;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            margin: 20px;
-            font-weight: bold;
-        }
-
-        #startButton:disabled {
-            background: #666;
-            cursor: not-allowed;
-        }
-
-        #status {
-            margin: 20px;
-            padding: 15px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 8px;
-            max-width: 400px;
-        }
-
-        .error { color: #ff4444; }
-        .success { color: #44ff44; }
-        .info { color: #4444ff; }
-
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
+            padding: 0;
             width: 100%;
             height: 100%;
+            overflow: hidden;
+        }
+
+        /* Force proper video sizing */
+        .arjs-video-container {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .arjs-video-container video {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+        }
+
+        /* Hide AR.js loader */
+        .arjs-loader {
+            display: none !important;
+        }
+
+        #instructions {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .control-btn.secondary {
+            background: #4444ff;
         }
     </style>
 </head>
 <body>
-    <div id="content">
-        <h1>🚀 WebXR AR</h1>
-        <div id="status">Checking AR support...</div>
-        <button id="startButton" disabled>Start AR</button>
-        <div style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
-            <p>This uses modern WebXR - no markers needed!</p>
-            <p>Tap screen to place objects on real surfaces</p>
-        </div>
+    <div id="instructions">
+        🎯 Point camera at flat surfaces. Objects will stick to real world!
     </div>
 
+    <div id="controls">
+        <button class="control-btn" onclick="placeObject()">Place Object</button>
+        <button class="control-btn secondary" onclick="clearObjects()">Clear All</button>
+    </div>
+
+    <a-scene
+        vr-mode-ui="enabled: false"
+        arjs="sourceType: webcam;
+              debugUIEnabled: false;
+              detectionMode: mono_and_matrix;
+              matrixCodeType: 3x3;
+              trackingMethod: best;
+              sourceWidth: 1280; sourceHeight: 960;
+              displayWidth: 1280; displayHeight: 960;"
+        renderer="logarithmicDepthBuffer: true; colorManagement: true; sortObjects: true;"
+        embedded
+        gesture-detector
+        id="scene">
+
+        <!-- Assets -->
+        <a-assets>
+            <a-mixin id="clickable"
+                     geometry="primitive: box; width: 0.3; height: 0.3; depth: 0.3"
+                     material="transparent: true; opacity: 0.8"
+                     animation__mouseenter="property: scale; to: 1.2 1.2 1.2; startEvents: mouseenter; dur: 200"
+                     animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+            </a-mixin>
+        </a-assets>
+
+        <!-- Lighting -->
+        <a-light type="ambient" color="#404040" intensity="0.4"></a-light>
+        <a-light type="directional" position="0 1 1" color="#ffffff" intensity="0.6"></a-light>
+
+        <!-- Simple marker-based tracking -->
+        <a-marker preset="hiro" id="hiro-marker">
+            <!-- Demo objects that appear on marker -->
+            <a-box position="0 0.5 0"
+                   scale="0.5 0.5 0.5"
+                   material="color: #ff6b6b; transparent: true; opacity: 0.8"
+                   animation="property: rotation; to: 0 360 0; loop: true; dur: 3000">
+            </a-box>
+
+            <a-sphere position="1 0.5 0"
+                      radius="0.3"
+                      material="color: #4ecdc4; transparent: true; opacity: 0.7"
+                      animation="property: position; to: 1 1.2 0; dir: alternate; loop: true; dur: 2000">
+            </a-sphere>
+
+            <a-text value="AR Working!"
+                    position="0 1.5 0"
+                    align="center"
+                    color="#ffe66d"
+                    scale="1.5 1.5 1.5">
+            </a-text>
+        </a-marker>
+
+        <!-- Camera -->
+        <a-camera-static/>
+    </a-scene>
+
     <script>
-        let scene, camera, renderer, controller, reticle, hitTestSource, localSpace;
-        let arObjects = [];
+        let scene, objectCount = 0;
 
-        const startButton = document.getElementById('startButton');
-        const statusDiv = document.getElementById('status');
-        const contentDiv = document.getElementById('content');
+        // Wait for scene to load
+        document.addEventListener('DOMContentLoaded', () => {
+            scene = document.querySelector('#scene');
 
-        // Check WebXR support
-        async function checkARSupport() {
-            if (!('xr' in navigator)) {
-                updateStatus('❌ WebXR not supported in this browser', 'error');
-                return false;
-            }
+            // Fix video positioning after AR.js loads
+            setTimeout(fixVideo, 2000);
+            setTimeout(fixVideo, 5000);
 
-            try {
-                const supported = await navigator.xr.isSessionSupported('immersive-ar');
-                if (supported) {
-                    updateStatus('✅ WebXR AR supported! Ready to start.', 'success');
-                    startButton.disabled = false;
-                    startButton.addEventListener('click', startAR);
-                    return true;
-                } else {
-                    updateStatus('⚠️ WebXR AR not supported on this device', 'error');
-                    return false;
-                }
-            } catch (error) {
-                updateStatus('❌ Error checking AR support: ' + error.message, 'error');
-                return false;
-            }
-        }
-
-        function updateStatus(message, type = 'info') {
-            statusDiv.innerHTML = message;
-            statusDiv.className = type;
-        }
-
-        async function startAR() {
-            try {
-                updateStatus('🚀 Starting AR session...', 'info');
-
-                // Initialize Three.js
-                scene = new THREE.Scene();
-                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-                renderer.setPixelRatio(window.devicePixelRatio);
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.xr.enabled = true;
-                renderer.setClearColor(0x000000, 0);
-
-                document.body.appendChild(renderer.domElement);
-                contentDiv.style.display = 'none';
-
-                // Lighting
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-                scene.add(ambientLight);
-
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                directionalLight.position.set(0, 1, 1);
-                scene.add(directionalLight);
-
-                // Create reticle (targeting indicator)
-                const reticleGeometry = new THREE.RingGeometry(0.15, 0.2, 32);
-                const reticleMaterial = new THREE.MeshBasicMaterial({
-                    color: 0xffffff,
-                    transparent: true,
-                    opacity: 0.5
-                });
-                reticle = new THREE.Mesh(reticleGeometry, reticleMaterial);
-                reticle.matrixAutoUpdate = false;
-                reticle.visible = false;
-                scene.add(reticle);
-
-                // Start AR session
-                const session = await navigator.xr.requestSession('immersive-ar', {
-                    requiredFeatures: ['hit-test'],
-                    optionalFeatures: ['dom-overlay'],
-                    domOverlay: { root: document.body }
-                });
-
-                await renderer.xr.setSession(session);
-
-                // Set up reference spaces
-                const referenceSpace = await session.requestReferenceSpace('local');
-                const viewerSpace = await session.requestReferenceSpace('viewer');
-                hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
-                localSpace = referenceSpace;
-
-                // Set up controller for screen taps
-                controller = renderer.xr.getController(0);
-                controller.addEventListener('select', onSelect);
-                scene.add(controller);
-
-                // Start render loop
-                renderer.setAnimationLoop(render);
-
-                updateStatus('✅ AR Active! Look around and tap to place objects', 'success');
-
-            } catch (error) {
-                console.error('AR startup error:', error);
-                updateStatus('❌ AR failed to start: ' + error.message, 'error');
-                contentDiv.style.display = 'block';
-            }
-        }
-
-        function onSelect() {
-            if (reticle.visible) {
-                // Create different objects
-                const objects = [
-                    () => new THREE.BoxGeometry(0.1, 0.1, 0.1),
-                    () => new THREE.SphereGeometry(0.05, 16, 16),
-                    () => new THREE.CylinderGeometry(0.05, 0.05, 0.1, 16),
-                    () => new THREE.ConeGeometry(0.05, 0.1, 16)
-                ];
-
-                const colors = [0xff4444, 0x44ff44, 0x4444ff, 0xffff44, 0xff44ff, 0x44ffff];
-
-                const geometry = objects[Math.floor(Math.random() * objects.length)]();
-                const material = new THREE.MeshLambertMaterial({
-                    color: colors[Math.floor(Math.random() * colors.length)]
-                });
-                const mesh = new THREE.Mesh(geometry, material);
-
-                // Position at reticle location
-                mesh.position.setFromMatrixPosition(reticle.matrix);
-                mesh.rotation.y = Math.random() * Math.PI * 2;
-
-                scene.add(mesh);
-                arObjects.push(mesh);
-
-                // Add spinning animation
-                mesh.userData.rotationSpeed = (Math.random() - 0.5) * 0.1;
-
-                console.log('Placed object #' + arObjects.length);
-            }
-        }
-
-        function render(timestamp, frame) {
-            if (frame) {
-                // Hit testing for surface detection
-                if (hitTestSource) {
-                    const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-                    if (hitTestResults.length > 0) {
-                        const hit = hitTestResults[0];
-                        const pose = hit.getPose(localSpace);
-
-                        if (pose) {
-                            reticle.visible = true;
-                            reticle.matrix.fromArray(pose.transform.matrix);
-                        }
-                    } else {
-                        reticle.visible = false;
-                    }
-                }
-            }
-
-            // Animate objects
-            arObjects.forEach(obj => {
-                if (obj.userData.rotationSpeed) {
-                    obj.rotation.y += obj.userData.rotationSpeed;
-                }
-            });
-
-            renderer.render(scene, camera);
-        }
-
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            if (camera && renderer) {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            }
+            // Update instructions
+            updateInstructions();
         });
 
-        // Initialize
-        checkARSupport();
+        function fixVideo() {
+            console.log('Attempting video fix...');
+
+            // Find and fix video element positioning
+            const videos = document.querySelectorAll('video');
+            videos.forEach(video => {
+                const container = video.parentElement;
+                if (container) {
+                    container.style.cssText = `
+                        position: absolute !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        width: 100% !important;
+                        height: 100% !important;
+                        z-index: -1 !important;
+                    `;
+                }
+
+                video.style.cssText = `
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
+                `;
+            });
+        }
+
+        function placeObject() {
+            if (!scene) return;
+
+            const colors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff', '#44ffff'];
+            const shapes = ['box', 'sphere', 'cylinder', 'cone'];
+
+            const color = colors[objectCount % colors.length];
+            const shape = shapes[objectCount % shapes.length];
+
+            // Create entity
+            const entity = document.createElement('a-entity');
+            entity.setAttribute('geometry', `primitive: ${shape}; radius: 0.2; height: 0.4`);
+            entity.setAttribute('material', `color: ${color}; transparent: true; opacity: 0.8`);
+            entity.setAttribute('position', `0 ${0.2 + objectCount * 0.3} ${-1 - objectCount * 0.2}`);
+            entity.setAttribute('animation', 'property: rotation; to: 360 360 360; loop: true; dur: 4000');
+            entity.classList.add('placed-object');
+
+            // Add to marker
+            const marker = document.querySelector('#hiro-marker');
+            if (marker) {
+                marker.appendChild(entity);
+                objectCount++;
+                updateInstructions();
+            }
+        }
+
+        function clearObjects() {
+            const objects = document.querySelectorAll('.placed-object');
+            objects.forEach(obj => obj.remove());
+            objectCount = 0;
+            updateInstructions();
+        }
+
+        function updateInstructions() {
+            const instructions = document.getElementById('instructions');
+            if (objectCount === 0) {
+                instructions.innerHTML = `🎯 Point camera at <a href="https://raw.githack.com/AR-js-org/AR.js/master/data/images/hiro.png" target="_blank" style="color:#44ff44;">HIRO marker</a> to see AR!`;
+            } else {
+                instructions.innerHTML = `🎯 ${objectCount} objects placed! Keep marker in view to see them.`;
+            }
+        }
+
+        // Handle orientation changes
+        window.addEventListener('orientationchange', () => {
+            setTimeout(fixVideo, 500);
+        });
+
+        // Monitor for AR.js video creation
+        const observer = new MutationObserver(() => {
+            setTimeout(fixVideo, 100);
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
     </script>
 </body>
 </html>
