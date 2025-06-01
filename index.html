@@ -2,9 +2,277 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Code</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            font-weight: normal;
+            letter-spacing: 2px;
+        }
+
+        .input-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        #codeInput {
+            background-color: transparent;
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: white;
+            font-size: 3rem;
+            padding: 20px;
+            text-align: center;
+            width: 100%;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        #codeInput:focus {
+            border-color: #666;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        #codeInput::placeholder {
+            color: #444;
+            letter-spacing: 8px;
+        }
+
+        .error-message {
+            color: #ff4444;
+            font-size: 1.2rem;
+            margin-top: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            min-height: 1.5rem;
+        }
+
+        .error-message.show {
+            opacity: 1;
+        }
+
+        .loading {
+            color: #888;
+            font-size: 1rem;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading.show {
+            opacity: 1;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 30px;
+            }
+
+            #codeInput {
+                font-size: 2.5rem;
+                padding: 15px;
+                letter-spacing: 6px;
+            }
+
+            #codeInput::placeholder {
+                letter-spacing: 6px;
+            }
+
+            .error-message {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 320px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            #codeInput {
+                font-size: 2rem;
+                letter-spacing: 4px;
+            }
+
+            #codeInput::placeholder {
+                letter-spacing: 4px;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>Enter code</h1>
+        <div class="input-container">
+            <input
+                type="text"
+                id="codeInput"
+                placeholder="___-____"
+                maxlength="8"
+                autocomplete="off"
+                inputmode="numeric"
+            >
+        </div>
+        <div class="loading" id="loading"></div>
+        <div class="error-message" id="errorMessage"></div>
+    </div>
 
+    <script>
+        const codeInput = document.getElementById('codeInput');
+        const errorMessage = document.getElementById('errorMessage');
+        const loading = document.getElementById('loading');
+
+        // Format input as user types
+        codeInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+
+            // Limit to 7 digits
+            if (value.length > 7) {
+                value = value.substring(0, 7);
+            }
+
+            // Add dash after 3rd digit
+            if (value.length > 3) {
+                value = value.substring(0, 3) + '-' + value.substring(3);
+            }
+
+            e.target.value = value;
+
+            // Clear any previous error
+            hideError();
+
+            // Check if code is complete (7 digits)
+            const digitsOnly = value.replace('-', '');
+            if (digitsOnly.length === 7) {
+                validateCode(digitsOnly);
+            }
+        });
+
+        // Prevent non-numeric input
+        codeInput.addEventListener('keydown', function(e) {
+            // Allow backspace, delete, tab, escape, enter
+            if ([8, 9, 27, 13, 46].indexOf(e.keyCode) !== -1 ||
+                // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                (e.keyCode === 65 && e.ctrlKey === true) ||
+                (e.keyCode === 67 && e.ctrlKey === true) ||
+                (e.keyCode === 86 && e.ctrlKey === true) ||
+                (e.keyCode === 88 && e.ctrlKey === true)) {
+                return;
+            }
+
+            // Ensure that it is a number and stop the keypress
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
+            }
+        });
+
+        // Handle paste events
+        codeInput.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            const digitsOnly = paste.replace(/\D/g, '');
+
+            if (digitsOnly.length <= 7) {
+                let formattedValue = digitsOnly;
+                if (formattedValue.length > 3) {
+                    formattedValue = formattedValue.substring(0, 3) + '-' + formattedValue.substring(3);
+                }
+                codeInput.value = formattedValue;
+
+                if (digitsOnly.length === 7) {
+                    validateCode(digitsOnly);
+                }
+            }
+        });
+
+        function validateCode(code) {
+            showLoading('Validating...');
+
+            // Simulate a brief validation delay for better UX
+            setTimeout(() => {
+                const lastDigit = parseInt(code.charAt(6));
+
+                if (lastDigit % 2 === 1) { // Odd number
+                    showLoading('Access granted!');
+                    setTimeout(() => {
+                        window.location.href = 'intro.html';
+                    }, 1000);
+                } else { // Even number
+                    showError('Please try again');
+                    setTimeout(() => {
+                        resetForm();
+                    }, 2000);
+                }
+            }, 500);
+        }
+
+        function showError(message) {
+            hideLoading();
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('show');
+        }
+
+        function showLoading(message) {
+            hideError();
+            loading.textContent = message;
+            loading.classList.add('show');
+        }
+
+        function hideLoading() {
+            loading.classList.remove('show');
+        }
+
+        function resetForm() {
+            codeInput.value = '';
+            hideError();
+            hideLoading();
+            codeInput.focus();
+        }
+
+        // Focus input on page load
+        window.addEventListener('load', function() {
+            codeInput.focus();
+        });
+
+        // Handle screen orientation changes on mobile
+        window.addEventListener('orientationchange', function() {
+            setTimeout(() => {
+                codeInput.focus();
+            }, 500);
+        });
+    </script>
 </body>
 </html>
