@@ -6,26 +6,217 @@
 </head>
 <body style="margin : 0px; overflow: hidden;">
     <div style="position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 100; font-size: 12px;">
-        Point at <a href="https://raw.githack.com/AR-js-org/AR.js/master/data/images/hiro.png" target="_blank" style="color: #44ff44;">HIRO marker</a>
+        <div>🍣 Sushi Launcher</div>
+        <div>Point at <a href="https://raw.githack.com/AR-js-org/AR.js/master/data/images/hiro.png" target="_blank" style="color: #44ff44;">HIRO marker</a></div>
+        <div>Tap anywhere to launch sushi!</div>
     </div>
-    <a-scene embedded arjs>
+
+    <div style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 100; font-size: 12px;">
+        <div>Sushi Launched: <span id="sushiCount">0</span></div>
+        <div>Active: <span id="activeSushi">0</span></div>
+    </div>
+
+    <a-scene embedded arjs id="scene">
         <a-assets>
-            <!-- Add your .glb models here -->
+            <!-- Your sushi models -->
+            <a-asset-item id="plate" src="assets/rectangular_plate_export.glb"></a-asset-item>
             <a-asset-item id="sushi1" src="assets/sushi_1.glb"></a-asset-item>
-            <!-- <a-asset-item id="myModel2" src="assets/anothermodel.glb"></a-asset-item> -->
-            <!-- <a-asset-item id="myModel3" src="assets/thirdmodel.glb"></a-asset-item> -->
+            <a-asset-item id="sushi2" src="assets/sushi_2.glb"></a-asset-item>
+            <a-asset-item id="sushi3" src="assets/sushi_3.glb"></a-asset-item>
+            <a-asset-item id="sushi4" src="assets/sushi_4.glb"></a-asset-item>
         </a-assets>
 
-        <a-marker preset="hiro">
-            <!-- Replace the box with your GLB model -->
+        <a-marker preset="hiro" id="marker">
+            <!-- Plate (always visible) -->
             <a-entity
-                gltf-model="#sushi1"
+                id="plate-entity"
+                gltf-model="#plate"
                 position="0 0 0"
                 scale="1 1 1"
                 rotation="0 0 0">
             </a-entity>
+
+            <!-- Invisible floor for collision detection -->
+            <a-plane
+                id="floor"
+                position="0 0 0"
+                rotation="-90 0 0"
+                width="10"
+                height="10"
+                material="transparent: true; opacity: 0"
+                visible="false">
+            </a-plane>
+
+            <!-- Container for launched sushi -->
+            <a-entity id="sushi-container"></a-entity>
         </a-marker>
-        <a-entity camera></a-entity>
+        <a-entity camera id="camera"></a-entity>
     </a-scene>
+
+    <script>
+        let sushiCount = 0;
+        let activeSushi = 0;
+        let scene, camera, marker;
+        const sushiModels = ['sushi1', 'sushi2', 'sushi3', 'sushi4'];
+        const launchedSushi = [];
+
+        // Wait for scene to load
+        document.addEventListener('DOMContentLoaded', () => {
+            scene = document.querySelector('#scene');
+            camera = document.querySelector('#camera');
+            marker = document.querySelector('#marker');
+
+            // Add touch/click listener to the entire scene
+            scene.addEventListener('click', onScreenTap);
+            scene.addEventListener('touchstart', onScreenTap);
+
+            console.log('Sushi Launcher ready! Tap to launch sushi 🍣');
+        });
+
+        function onScreenTap(event) {
+            // Prevent default to avoid issues
+            event.preventDefault();
+
+            // Only launch if marker is visible
+            if (!marker.object3D.visible) {
+                console.log('Marker not visible, can\'t launch sushi');
+                return;
+            }
+
+            launchRandomSushi(event);
+        }
+
+        function launchRandomSushi(event) {
+            // Choose random sushi
+            const randomSushi = sushiModels[Math.floor(Math.random() * sushiModels.length)];
+
+            // Get camera position and rotation
+            const cameraEl = camera;
+            const cameraPos = cameraEl.object3D.position;
+            const cameraRotation = cameraEl.object3D.rotation;
+
+            // Calculate launch direction (forward from camera)
+            const direction = new THREE.Vector3(0, 0, -1);
+            direction.applyEuler(cameraRotation);
+
+            // Add some randomness based on tap position
+            const canvas = scene.canvas;
+            let tapX = 0, tapY = 0;
+
+            if (event.touches && event.touches[0]) {
+                tapX = event.touches[0].clientX;
+                tapY = event.touches[0].clientY;
+            } else {
+                tapX = event.clientX || 0;
+                tapY = event.clientY || 0;
+            }
+
+            // Convert tap position to direction variation
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            const offsetX = (tapX - centerX) / centerX * 0.3; // Max 30% deviation
+            const offsetY = (tapY - centerY) / centerY * 0.3;
+
+            direction.x += offsetX;
+            direction.y -= offsetY; // Invert Y for screen coordinates
+            direction.normalize();
+
+            // Create sushi entity
+            const sushiEntity = document.createElement('a-entity');
+            sushiEntity.setAttribute('gltf-model', `#${randomSushi}`);
+
+            // Start position (slightly in front of camera, converted to marker space)
+            const startPos = new THREE.Vector3(0, 0.5, 0); // Start above the plate
+            sushiEntity.setAttribute('position', `${startPos.x} ${startPos.y} ${startPos.z}`);
+            sushiEntity.setAttribute('scale', '0.8 0.8 0.8');
+
+            // Add physics properties
+            sushiEntity.userData = {
+                velocity: direction.clone().multiplyScalar(5), // Launch speed
+                gravity: -9.8,
+                bounced: false,
+                lifetime: 0
+            };
+
+            // Add to container
+            document.querySelector('#sushi-container').appendChild(sushiEntity);
+            launchedSushi.push(sushiEntity);
+
+            // Update counters
+            sushiCount++;
+            activeSushi++;
+            updateUI();
+
+            console.log(`Launched ${randomSushi}! Direction:`, direction);
+        }
+
+        // Physics simulation
+        function updatePhysics() {
+            const deltaTime = 1/60; // Assume 60fps
+
+            launchedSushi.forEach((sushi, index) => {
+                if (!sushi.parentNode) return; // Skip if removed
+
+                const userData = sushi.userData;
+                const currentPos = sushi.object3D.position;
+
+                // Update lifetime
+                userData.lifetime += deltaTime;
+
+                // Apply gravity to Y velocity
+                userData.velocity.y += userData.gravity * deltaTime;
+
+                // Update position
+                currentPos.x += userData.velocity.x * deltaTime;
+                currentPos.y += userData.velocity.y * deltaTime;
+                currentPos.z += userData.velocity.z * deltaTime;
+
+                // Add rotation for fun
+                sushi.object3D.rotation.x += 2 * deltaTime;
+                sushi.object3D.rotation.z += 1 * deltaTime;
+
+                // Floor collision (Y = 0 is the marker level)
+                if (currentPos.y <= 0 && userData.velocity.y < 0) {
+                    currentPos.y = 0;
+                    userData.velocity.y = -userData.velocity.y * 0.3; // Bounce with damping
+                    userData.velocity.x *= 0.7; // Friction
+                    userData.velocity.z *= 0.7;
+
+                    if (!userData.bounced) {
+                        userData.bounced = true;
+                        console.log('Sushi hit the floor!');
+                    }
+                }
+
+                // Remove sushi after 10 seconds or if it falls too far
+                if (userData.lifetime > 10 || currentPos.y < -5) {
+                    sushi.parentNode.removeChild(sushi);
+                    launchedSushi.splice(index, 1);
+                    activeSushi--;
+                    updateUI();
+                }
+
+                // Update the actual position
+                sushi.setAttribute('position', `${currentPos.x} ${currentPos.y} ${currentPos.z}`);
+            });
+        }
+
+        function updateUI() {
+            document.getElementById('sushiCount').textContent = sushiCount;
+            document.getElementById('activeSushi').textContent = activeSushi;
+        }
+
+        // Start physics loop
+        setInterval(updatePhysics, 1000/60); // 60fps
+
+        // Handle marker visibility
+        marker.addEventListener('markerFound', () => {
+            console.log('Marker found! Ready to launch sushi!');
+        });
+
+        marker.addEventListener('markerLost', () => {
+            console.log('Marker lost! Find the marker to continue.');
+        });
+    </script>
 </body>
 </html>
