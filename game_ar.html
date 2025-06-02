@@ -19,14 +19,14 @@
     <a-scene embedded arjs id="scene">
         <a-assets>
             <!-- Your sushi models -->
-            <a-asset-item id="plate" src="assets/rectangular_plate_export.glb"></a-asset-item>
-            <a-asset-item id="sushi1" src="assets/sushi_1.glb"></a-asset-item>
-            <a-asset-item id="sushi2" src="assets/sushi_2.glb"></a-asset-item>
-            <a-asset-item id="sushi3" src="assets/sushi_3.glb"></a-asset-item>
-            <a-asset-item id="sushi4" src="assets/sushi_4.glb"></a-asset-item>
+            <a-asset-item id="plate" src="assets/plate.glb"></a-asset-item>
+            <a-asset-item id="sushi1" src="assets/sushi1.glb"></a-asset-item>
+            <a-asset-item id="sushi2" src="assets/sushi2.glb"></a-asset-item>
+            <a-asset-item id="sushi3" src="assets/sushi3.glb"></a-asset-item>
+            <a-asset-item id="sushi4" src="assets/sushi4.glb"></a-asset-item>
         </a-assets>
 
-        <a-marker type="pattern" url="assets/marker.patt" id="marker">
+        <a-marker type="pattern" url="assets/your-custom-marker.patt" id="marker">
             <!-- Plate (always visible) -->
             <a-entity
                 id="plate-entity"
@@ -127,9 +127,9 @@
             const sushiEntity = document.createElement('a-entity');
             sushiEntity.setAttribute('gltf-model', `#${randomSushi}`);
 
-            const startPos = new THREE.Vector3(0, 0.5, 0);
+            const startPos = new THREE.Vector3(0, 0.2, 0);
             sushiEntity.setAttribute('position', `${startPos.x} ${startPos.y} ${startPos.z}`);
-            sushiEntity.setAttribute('scale', '0.8 0.8 0.8');
+            sushiEntity.setAttribute('scale', '0.2 0.2 0.2');
 
             // Enhanced physics state system
             sushiEntity.userData = {
@@ -302,12 +302,12 @@
             sushi.object3D.rotation.z += userData.angularVelocity.z * deltaTime;
 
             // Check for next collision or settle
-            if (currentPos.y <= 0.05 && userData.velocity.y < 0) {
+            if (currentPos.y <= 0.02 && userData.velocity.y < 0) {
                 userData.state = SUSHI_STATES.COLLIDING;
                 userData.stateTimer = 0;
                 userData.bounces++;
                 userData.impactForce = Math.abs(userData.velocity.y);
-                currentPos.y = 0.05;
+                currentPos.y = 0.02;
             } else if (userData.stateTimer > 2) {
                 // Been settling too long, just settle
                 userData.state = SUSHI_STATES.SETTLED;
