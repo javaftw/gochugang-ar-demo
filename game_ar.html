@@ -7,7 +7,7 @@
 <body style="margin : 0px; overflow: hidden;">
     <div style="position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 100; font-size: 12px;">
         <div>🍣 Sushi Launcher</div>
-        <div>Point at <a href="https://raw.githack.com/AR-js-org/AR.js/master/data/images/hiro.png" target="_blank" style="color: #44ff44;">HIRO marker</a></div>
+        <div>Point at your custom marker!</div>
         <div>Tap anywhere to launch sushi!</div>
     </div>
 
@@ -19,14 +19,14 @@
     <a-scene embedded arjs id="scene">
         <a-assets>
             <!-- Your sushi models -->
-            <a-asset-item id="plate" src="assets/rectangular_plate_export.glb"></a-asset-item>
-            <a-asset-item id="sushi1" src="assets/sushi_1.glb"></a-asset-item>
-            <a-asset-item id="sushi2" src="assets/sushi_2.glb"></a-asset-item>
-            <a-asset-item id="sushi3" src="assets/sushi_3.glb"></a-asset-item>
-            <a-asset-item id="sushi4" src="assets/sushi_4.glb"></a-asset-item>
+            <a-asset-item id="plate" src="assets/plate.glb"></a-asset-item>
+            <a-asset-item id="sushi1" src="assets/sushi1.glb"></a-asset-item>
+            <a-asset-item id="sushi2" src="assets/sushi2.glb"></a-asset-item>
+            <a-asset-item id="sushi3" src="assets/sushi3.glb"></a-asset-item>
+            <a-asset-item id="sushi4" src="assets/sushi4.glb"></a-asset-item>
         </a-assets>
 
-        <a-marker preset="hiro" id="marker">
+        <a-marker type="pattern" url="assets/marker.patt" id="marker">
             <!-- Plate (always visible) -->
             <a-entity
                 id="plate-entity"
@@ -60,6 +60,14 @@
         const sushiModels = ['sushi1', 'sushi2', 'sushi3', 'sushi4'];
         const launchedSushi = [];
 
+        // Sushi physics states
+        const SUSHI_STATES = {
+            FLYING: 'flying',       // Rigid, spinning, normal physics
+            COLLIDING: 'colliding', // Soft, squash/stretch effects
+            SETTLING: 'settling',   // Transitioning back to rigid
+            SETTLED: 'settled'      // Static, no physics/animations
+        };
+
         // Wait for scene to load
         document.addEventListener('DOMContentLoaded', () => {
             scene = document.querySelector('#scene');
@@ -74,10 +82,8 @@
         });
 
         function onScreenTap(event) {
-            // Prevent default to avoid issues
             event.preventDefault();
 
-            // Only launch if marker is visible
             if (!marker.object3D.visible) {
                 console.log('Marker not visible, can\'t launch sushi');
                 return;
@@ -87,19 +93,16 @@
         }
 
         function launchRandomSushi(event) {
-            // Choose random sushi
             const randomSushi = sushiModels[Math.floor(Math.random() * sushiModels.length)];
 
-            // Get camera position and rotation
+            // Get camera direction
             const cameraEl = camera;
-            const cameraPos = cameraEl.object3D.position;
             const cameraRotation = cameraEl.object3D.rotation;
 
-            // Calculate launch direction (forward from camera)
             const direction = new THREE.Vector3(0, 0, -1);
             direction.applyEuler(cameraRotation);
 
-            // Add some randomness based on tap position
+            // Add tap position variation
             const canvas = scene.canvas;
             let tapX = 0, tapY = 0;
 
@@ -111,94 +114,219 @@
                 tapY = event.clientY || 0;
             }
 
-            // Convert tap position to direction variation
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
-            const offsetX = (tapX - centerX) / centerX * 0.3; // Max 30% deviation
-            const offsetY = (tapY - centerY) / centerY * 0.3;
+            const offsetX = (tapX - centerX) / centerX * 0.4;
+            const offsetY = (tapY - centerY) / centerY * 0.4;
 
             direction.x += offsetX;
-            direction.y -= offsetY; // Invert Y for screen coordinates
+            direction.y -= offsetY;
             direction.normalize();
 
             // Create sushi entity
             const sushiEntity = document.createElement('a-entity');
             sushiEntity.setAttribute('gltf-model', `#${randomSushi}`);
 
-            // Start position (slightly in front of camera, converted to marker space)
-            const startPos = new THREE.Vector3(0, 0.5, 0); // Start above the plate
+            const startPos = new THREE.Vector3(0, 0.5, 0);
             sushiEntity.setAttribute('position', `${startPos.x} ${startPos.y} ${startPos.z}`);
             sushiEntity.setAttribute('scale', '0.8 0.8 0.8');
 
-            // Add physics properties
+            // Enhanced physics state system
             sushiEntity.userData = {
-                velocity: direction.clone().multiplyScalar(5), // Launch speed
-                gravity: -9.8,
-                bounced: false,
-                lifetime: 0
+                state: SUSHI_STATES.FLYING,
+                velocity: direction.clone().multiplyScalar(6),
+                originalScale: new THREE.Vector3(0.8, 0.8, 0.8),
+                currentScale: new THREE.Vector3(0.8, 0.8, 0.8),
+                angularVelocity: new THREE.Vector3(
+                    (Math.random() - 0.5) * 8,  // Random spin
+                    (Math.random() - 0.5) * 6,
+                    (Math.random() - 0.5) * 10
+                ),
+                gravity: -12,
+                bounces: 0,
+                maxBounces: 3,
+                lifetime: 0,
+                stateTimer: 0,
+                impactForce: 0,
+                settled: false
             };
 
-            // Add to container
             document.querySelector('#sushi-container').appendChild(sushiEntity);
             launchedSushi.push(sushiEntity);
 
-            // Update counters
             sushiCount++;
             activeSushi++;
             updateUI();
 
-            console.log(`Launched ${randomSushi}! Direction:`, direction);
+            console.log(`🚀 Launched ${randomSushi} in ${SUSHI_STATES.FLYING} state!`);
         }
 
-        // Physics simulation
         function updatePhysics() {
-            const deltaTime = 1/60; // Assume 60fps
+            const deltaTime = 1/60;
 
             launchedSushi.forEach((sushi, index) => {
-                if (!sushi.parentNode) return; // Skip if removed
+                if (!sushi.parentNode) return;
 
                 const userData = sushi.userData;
                 const currentPos = sushi.object3D.position;
 
-                // Update lifetime
                 userData.lifetime += deltaTime;
+                userData.stateTimer += deltaTime;
 
-                // Apply gravity to Y velocity
-                userData.velocity.y += userData.gravity * deltaTime;
+                // State machine
+                switch(userData.state) {
+                    case SUSHI_STATES.FLYING:
+                        updateFlyingState(sushi, userData, currentPos, deltaTime);
+                        break;
 
-                // Update position
-                currentPos.x += userData.velocity.x * deltaTime;
-                currentPos.y += userData.velocity.y * deltaTime;
-                currentPos.z += userData.velocity.z * deltaTime;
+                    case SUSHI_STATES.COLLIDING:
+                        updateCollidingState(sushi, userData, currentPos, deltaTime);
+                        break;
 
-                // Add rotation for fun
-                sushi.object3D.rotation.x += 2 * deltaTime;
-                sushi.object3D.rotation.z += 1 * deltaTime;
+                    case SUSHI_STATES.SETTLING:
+                        updateSettlingState(sushi, userData, currentPos, deltaTime);
+                        break;
 
-                // Floor collision (Y = 0 is the marker level)
-                if (currentPos.y <= 0 && userData.velocity.y < 0) {
-                    currentPos.y = 0;
-                    userData.velocity.y = -userData.velocity.y * 0.3; // Bounce with damping
-                    userData.velocity.x *= 0.7; // Friction
-                    userData.velocity.z *= 0.7;
-
-                    if (!userData.bounced) {
-                        userData.bounced = true;
-                        console.log('Sushi hit the floor!');
-                    }
+                    case SUSHI_STATES.SETTLED:
+                        updateSettledState(sushi, userData, currentPos, deltaTime);
+                        break;
                 }
 
-                // Remove sushi after 10 seconds or if it falls too far
-                if (userData.lifetime > 10 || currentPos.y < -5) {
+                // Cleanup old sushi
+                if (userData.lifetime > 15 || currentPos.y < -5) {
                     sushi.parentNode.removeChild(sushi);
                     launchedSushi.splice(index, 1);
                     activeSushi--;
                     updateUI();
+                    console.log('🗑️ Sushi cleaned up');
                 }
 
-                // Update the actual position
+                // Update actual position and scale
                 sushi.setAttribute('position', `${currentPos.x} ${currentPos.y} ${currentPos.z}`);
+                sushi.setAttribute('scale', `${userData.currentScale.x} ${userData.currentScale.y} ${userData.currentScale.z}`);
             });
+        }
+
+        function updateFlyingState(sushi, userData, currentPos, deltaTime) {
+            // RIGID BODY PHYSICS
+
+            // Apply gravity
+            userData.velocity.y += userData.gravity * deltaTime;
+
+            // Update position
+            currentPos.x += userData.velocity.x * deltaTime;
+            currentPos.y += userData.velocity.y * deltaTime;
+            currentPos.z += userData.velocity.z * deltaTime;
+
+            // Rigid body rotation (spinning through air)
+            sushi.object3D.rotation.x += userData.angularVelocity.x * deltaTime;
+            sushi.object3D.rotation.y += userData.angularVelocity.y * deltaTime;
+            sushi.object3D.rotation.z += userData.angularVelocity.z * deltaTime;
+
+            // Check for floor collision
+            if (currentPos.y <= 0.05 && userData.velocity.y < 0) {
+                // TRANSITION TO COLLIDING STATE
+                userData.state = SUSHI_STATES.COLLIDING;
+                userData.stateTimer = 0;
+                userData.bounces++;
+                userData.impactForce = Math.abs(userData.velocity.y);
+
+                currentPos.y = 0.05; // Keep slightly above floor
+
+                console.log(`💥 Sushi impact! Force: ${userData.impactForce.toFixed(2)}, Bounce ${userData.bounces}`);
+            }
+        }
+
+        function updateCollidingState(sushi, userData, currentPos, deltaTime) {
+            // SOFT BODY EFFECTS
+
+            const collisionDuration = 0.3; // 300ms of soft collision
+            const progress = userData.stateTimer / collisionDuration;
+
+            if (progress < 1) {
+                // Squash and stretch effect
+                const squashAmount = userData.impactForce * 0.1; // Stronger impacts = more squash
+                const squashProgress = Math.sin(progress * Math.PI); // Smooth curve
+
+                userData.currentScale.x = userData.originalScale.x * (1 + squashAmount * squashProgress);
+                userData.currentScale.y = userData.originalScale.y * (1 - squashAmount * squashProgress * 0.7);
+                userData.currentScale.z = userData.originalScale.z * (1 + squashAmount * squashProgress);
+
+                // Slow rotation during collision
+                userData.angularVelocity.multiplyScalar(0.9);
+                sushi.object3D.rotation.x += userData.angularVelocity.x * deltaTime * 0.3;
+                sushi.object3D.rotation.y += userData.angularVelocity.y * deltaTime * 0.3;
+                sushi.object3D.rotation.z += userData.angularVelocity.z * deltaTime * 0.3;
+
+                // Bounce calculation
+                if (progress > 0.7) { // Start bounce near end of collision
+                    const bounceForce = userData.impactForce * 0.4 * (1 - userData.bounces * 0.2); // Weaker each bounce
+                    userData.velocity.y = bounceForce;
+                    userData.velocity.x *= 0.7; // Friction
+                    userData.velocity.z *= 0.7;
+                }
+            } else {
+                // TRANSITION TO SETTLING OR SETTLED
+                userData.currentScale.copy(userData.originalScale); // Restore original scale
+
+                if (userData.bounces >= userData.maxBounces || userData.impactForce < 2) {
+                    // SETTLED: No more bounces
+                    userData.state = SUSHI_STATES.SETTLED;
+                    userData.velocity.set(0, 0, 0);
+                    userData.angularVelocity.set(0, 0, 0);
+                    console.log('🛑 Sushi settled - physics detached');
+                } else {
+                    // SETTLING: One more bounce
+                    userData.state = SUSHI_STATES.SETTLING;
+                    console.log('🔄 Sushi settling - preparing for next bounce');
+                }
+
+                userData.stateTimer = 0;
+            }
+        }
+
+        function updateSettlingState(sushi, userData, currentPos, deltaTime) {
+            // TRANSITIONING BACK TO RIGID
+
+            // Brief moment of rigid flight before next collision
+            userData.velocity.y += userData.gravity * deltaTime * 0.8; // Slightly reduced gravity
+
+            currentPos.x += userData.velocity.x * deltaTime;
+            currentPos.y += userData.velocity.y * deltaTime;
+            currentPos.z += userData.velocity.z * deltaTime;
+
+            // Slower rotation
+            userData.angularVelocity.multiplyScalar(0.95);
+            sushi.object3D.rotation.x += userData.angularVelocity.x * deltaTime;
+            sushi.object3D.rotation.y += userData.angularVelocity.y * deltaTime;
+            sushi.object3D.rotation.z += userData.angularVelocity.z * deltaTime;
+
+            // Check for next collision or settle
+            if (currentPos.y <= 0.05 && userData.velocity.y < 0) {
+                userData.state = SUSHI_STATES.COLLIDING;
+                userData.stateTimer = 0;
+                userData.bounces++;
+                userData.impactForce = Math.abs(userData.velocity.y);
+                currentPos.y = 0.05;
+            } else if (userData.stateTimer > 2) {
+                // Been settling too long, just settle
+                userData.state = SUSHI_STATES.SETTLED;
+                userData.velocity.set(0, 0, 0);
+                userData.angularVelocity.set(0, 0, 0);
+            }
+        }
+
+        function updateSettledState(sushi, userData, currentPos, deltaTime) {
+            // STATIC - NO PHYSICS OR ANIMATIONS
+            // Sushi is now completely static, no calculations needed
+            // This improves performance for long-lived sushi
+
+            if (!userData.settled) {
+                userData.settled = true;
+                activeSushi--; // Remove from active physics count
+                updateUI();
+                console.log('✅ Sushi fully settled and static');
+            }
         }
 
         function updateUI() {
@@ -207,15 +335,15 @@
         }
 
         // Start physics loop
-        setInterval(updatePhysics, 1000/60); // 60fps
+        setInterval(updatePhysics, 1000/60);
 
         // Handle marker visibility
         marker.addEventListener('markerFound', () => {
-            console.log('Marker found! Ready to launch sushi!');
+            console.log('🎯 Marker found! Ready to launch sushi!');
         });
 
         marker.addEventListener('markerLost', () => {
-            console.log('Marker lost! Find the marker to continue.');
+            console.log('❌ Marker lost! Find the marker to continue.');
         });
     </script>
 </body>
