@@ -1,52 +1,38 @@
 document.addEventListener('DOMContentLoaded', function() {
     const navigation = document.getElementById('navigation');
 
-    // Show navigation after both animations complete
-    // GOCHU animation: 4 seconds
-    // GAMES animation: starts at 2s, runs for 2s (total 4s)
-    // Add a small delay to ensure both animations are complete
+    // Show navigation after logo animations complete
     setTimeout(() => {
         navigation.classList.remove('hidden');
         navigation.classList.add('show');
-    }, 4500); // 4.5 seconds to ensure animations are complete
+    }, 4500); // Delay to ensure animations are finished
 
-    // Add click handlers for navigation buttons
-    const navButtons = document.querySelectorAll('.nav-button');
-
-    navButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            // Add click effect
+    // Add click handler for the navigation button
+    const navButton = document.querySelector('.nav-button');
+    if (navButton) {
+        navButton.addEventListener('click', function() {
+            // Add a visual click effect
             this.style.transform = 'scale(0.95)';
             setTimeout(() => {
                 this.style.transform = '';
             }, 150);
         });
-    });
+    }
 
-    // Optional: Add keyboard navigation
+    // Keyboard navigation (Enter or Spacebar)
     document.addEventListener('keydown', function(e) {
-        if (navigation.classList.contains('show')) {
-            switch(e.key) {
-                case '1':
-                case 'a':
-                case 'A':
-                    window.location.href = 'game_ar.html';
-                    break;
-                case '2':
-                case 'd':
-                case 'D':
-                    window.location.href = 'game_2d.html';
-                    break;
+        if (navigation.classList.contains('show') && (e.key === 'Enter' || e.key === ' ')) {
+            // Find the button and navigate to its target
+            const targetHref = navButton.onclick.toString().match(/'([^']+)'/)[1];
+            if (targetHref) {
+                window.location.href = targetHref;
             }
         }
     });
 
-    // Optional: Preload the other pages for faster navigation
-    const preloadLinks = ['game_ar.html', 'game_2d.html'];
-    preloadLinks.forEach(link => {
-        const linkElement = document.createElement('link');
-        linkElement.rel = 'prefetch';
-        linkElement.href = link;
-        document.head.appendChild(linkElement);
-    });
+    // Preload the game selection page for faster navigation
+    const preloadLink = document.createElement('link');
+    preloadLink.rel = 'prefetch';
+    preloadLink.href = 'pick_games.html';
+    document.head.appendChild(preloadLink);
 });

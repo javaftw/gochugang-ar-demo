@@ -1,0 +1,91 @@
+/* Base Styles and Theme */
+body {
+    background-color: #282828;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.container {
+    width: 100%;
+    max-width: 900px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2.5rem;
+    color: #fff;
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #00ff00, 0 0 20px #00ff00, 0 0 25px #00ff00;
+    margin-bottom: 40px;
+}
+
+/* Game Grid Layout */
+.game-grid {
+    display: grid;
+    gap: 25px;
+}
+
+/* Game Card Styling */
+.game-card {
+    background-color: #1e1e1e;
+    border: 2px solid #555;
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: bold;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.game-card:hover {
+    transform: scale(1.05);
+    border-color: #00ff00;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.6), 0 0 20px rgba(0, 255, 0, 0.4);
+}
+
+.game-card:active {
+    transform: scale(0.98);
+}
+
+.game-icon {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 15px;
+}
+
+/* --- Responsive Grid --- */
+
+/* Default: Landscape (3 Columns x 2 Rows) */
+.game-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* Portrait (2 Columns x 3 Rows) */
+@media (orientation: portrait) {
+    .game-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Small Portrait (1 Column) */
+@media (max-width: 500px) and (orientation: portrait) {
+    .game-grid {
+        grid-template-columns: 1fr;
+    }
+    h1 {
+        font-size: 2rem;
+    }
+}
