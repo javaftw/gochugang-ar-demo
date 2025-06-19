@@ -29,6 +29,12 @@
             max-width: 400px;
         }
 
+        .logo {
+            width: 200px;
+            height: auto;
+            margin-bottom: 30px;
+        }
+
         h1 {
             font-size: 2.5rem;
             margin-bottom: 40px;
@@ -93,6 +99,11 @@
 
         /* Mobile optimizations */
         @media (max-width: 480px) {
+            .logo {
+                width: 160px;
+                margin-bottom: 25px;
+            }
+
             h1 {
                 font-size: 2rem;
                 margin-bottom: 30px;
@@ -114,6 +125,11 @@
         }
 
         @media (max-width: 320px) {
+            .logo {
+                width: 140px;
+                margin-bottom: 20px;
+            }
+
             h1 {
                 font-size: 1.8rem;
             }
@@ -131,6 +147,7 @@
 </head>
 <body>
     <div class="container">
+        <img src="/assets/gyutto-games-logo.svg" alt="Gyutto Games" class="logo">
         <h1>Enter code</h1>
         <div class="input-container">
             <input
