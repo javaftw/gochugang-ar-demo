@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+ <html lang="en">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Cost & Profit Calculator</title>
+     <style>
+          body {
+              font-family: sans-serif;
+              background-color: #121212;
+              color: #f0f0f0;
+              margin: 0;
+              padding: 20px;
+          }
+
+          h2 {
+              color: #bb86fc;
+          }
+
+          .container {
+              display: flex;
+              flex-wrap: wrap;
+              justify-content: space-between;
+          }
+
+          .section {
+              width: 48%;
+              margin-bottom: 20px;
+              padding: 20px;
+              background-color: #1e1e1e;
+              border-radius: 8px;
+          }
+
+          label {
+              display: block;
+              margin-bottom: 5px;
+          }
+
+          input, select {
+              width: 100%;
+              padding: 8px;
+              margin-bottom: 10px;
+              border: 1px solid #333;
+              border-radius: 4px;
+              background-color: #333;
+              color: #f0f0f0;
+          }
+
+          button {
+              background-color: #bb86fc;
+              color: white;
+              padding: 10px 15px;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+          }
+
+          button:hover {
+              background-color: #9c6ddc;
+          }
+
+          #results {
+              margin-top: 20px;
+              padding: 15px;
+              background-color: #2a2a2a;
+              border-radius: 8px;
+          }
+
+          .image-container {
+              margin-top: 20px;
+              text-align: center;
+          }
+
+          .image-container img {
+              max-width: 100%;
+              height: auto;
+              border-radius: 8px;
+          }
+      </style>
+ </head>
+ <body>
+     <div class="container">
+         <div class="section">
+             <h2>Customer (Venue) Perspective</h2>
+             <h3>Initial Set-Up Fee</h3>
+             <label>White-labeling (4 games @ R1500 each): R6000</label><br>
+             <label>Branded game lobby & basic menu/POS integration: Mandatory</label><br>
+             <label>Deep POS Integration (Optional, R2000+):</label>
+             <input type="number" id="deepPOS" value="0">
+             <label>Specials Sync (Optional, R1000 per special):</label>
+             <input type="number" id="specialsSync" value="0">
+             <label>Additional Games (R1500 each):</label>
+             <input type="number" id="additionalGames" value="0">
+             <label>Table Tents (4 @ R650, R450 per additional):</label>
+             <input type="number" id="tableTents" value="0">
+
+             <h3>Monthly Expenses</h3>
+             <label>Service Subscription: R650</label><br>
+             <label>Normal Tokens (150 @ R4 wholesale, R10 retail):</label><br>
+             <label>Premium Tokens (150 @ R8 wholesale, R20 retail):</label><br>
+
+             <h3>Monthly Income</h3>
+             <label>Total Number of Tokens (Normal + Premium):</label>
+             <input type="number" id="totalTokens" value="300">
+
+             <h3>Games Controls</h3>
+              <label>Target Payout Percentage (%):</label>
+              <input type="number" id="payoutPercentage" value="75">
+              <label>% of Prize Pool for Small Wins:</label>
+              <input type="number" id="smallWinPercentage" value="50">
+              <label>% of Prize Pool for Medium Wins:</label>
+              <input type="number" id="mediumWinPercentage" value="30">
+              <label>% of Prize Pool for Jackpot:</label>
+              <input type="number" id="jackpotPercentage" value="20">
+              <label>Average Plays per Normal Token:</label>
+              <input type="number" id="normalTokenPlays" value="2">
+              <label>Average Plays per Premium Token:</label>
+              <input type="number" id="premiumTokenPlays" value="2">
+
+             <button onclick="calculateCustomer()">Calculate</button>
+         </div>
+
+         <div class="section">
+             <h2>Your (Business) Perspective</h2>
+             <h3>Expenses</h3>
+             <label>Server Cost (Monthly): R650</label><br>
+             <label>Table Tents (Per Customer, Once-Off @ R350):</label>
+             <input type="number" id="tableTentsBusiness" value="0">
+
+             <h3>Income</h3>
+             <label>Number of Venues:</label>
+             <input type="number" id="numVenues" value="1">
+             <label>Income per Venue (Calculated from Customer Section):</label>
+             <input type="number" id="incomePerVenue" readonly>
+
+             <button onclick="calculateBusiness()">Calculate</button>
+         </div>
+     </div>
+
+     <div id="results"></div>
+
+     <script>
+          function calculateCustomer() {
+              const deepPOS = parseFloat(document.getElementById('deepPOS').value) || 0;
+              const specialsSync = parseFloat(document.getElementById('specialsSync').value) || 0;
+              const additionalGames = parseFloat(document.getElementById('additionalGames').value) || 0;
+              const tableTents = parseFloat(document.getElementById('tableTents').value) || 0;
+              const totalTokens = parseFloat(document.getElementById('totalTokens').value) || 0;
+              const payoutPercentage = parseFloat(document.getElementById('payoutPercentage').value) / 100;
+              const smallWinPercentage = parseFloat(document.getElementById('smallWinPercentage').value) / 100;
+              const mediumWinPercentage = parseFloat(document.getElementById('mediumWinPercentage').value) / 100;
+              const jackpotPercentage = parseFloat(document.getElementById('jackpotPercentage').value) / 100;
+              const normalTokenPlays = parseFloat(document.getElementById('normalTokenPlays').value) || 1;
+              const premiumTokenPlays = parseFloat(document.getElementById('premiumTokenPlays').value) || 1;
+
+              const initialSetupFee = 6000 + deepPOS + (specialsSync * 1000) + (additionalGames * 1500) + (tableTents > 4 ? (4 * 650) + ((tableTents - 4) * 450) : tableTents * 650);
+              const monthlyExpenses = 650 + (150 * 4) + (150 * 8); // Service sub + tokens
+              const tokenIncome = totalTokens * ((150/totalTokens)*10 + (150/totalTokens)*20); // Assuming equal split for now
+              const tokenSalesProfit = tokenIncome - monthlyExpenses;
+              const prizePoolValue = tokenIncome * payoutPercentage;
+              const smallWinPool = prizePoolValue * smallWinPercentage;
+              const mediumWinPool = prizePoolValue * mediumWinPercentage;
+              const jackpotPool = prizePoolValue * jackpotPercentage;
+
+              const resultsDiv = document.getElementById('results');
+              resultsDiv.innerHTML = `
+                  <h3>Customer (Venue) Results</h3>
+                  <p><b>Initial Set-Up Fee:</b> R${initialSetupFee.toFixed(2)}</p>
+                  <p><b>Monthly Expenses:</b> R${monthlyExpenses.toFixed(2)}</p>
+                  <p><b>Total Token Income:</b> R${tokenIncome.toFixed(2)}</p>
+                  <p><b>Token Sales Profit:</b> R${tokenSalesProfit.toFixed(2)}</p>
+                  <p><b>Prize Pool Value:</b> R${prizePoolValue.toFixed(2)}</p>
+                  <p><b>Small Win Pool:</b> R${smallWinPool.toFixed(2)}</p>
+                  <p><b>Medium Win Pool:</b> R${mediumWinPool.toFixed(2)}</p>
+                  <p><b>Jackpot Pool:</b> R${jackpotPool.toFixed(2)}</p>
+              `;
+
+              // Update income per venue for the business perspective
+              document.getElementById('incomePerVenue').value = tokenSalesProfit.toFixed(2);
+          }
+
+          function calculateBusiness() {
+              const tableTentsBusiness = parseFloat(document.getElementById('tableTentsBusiness').value) || 0;
+              const numVenues = parseFloat(document.getElementById('numVenues').value) || 1;
+              const incomePerVenue = parseFloat(document.getElementById('incomePerVenue').value) || 0;
+
+              const onceOffExpenses = tableTentsBusiness * 350;
+              const totalIncome = numVenues * incomePerVenue;
+              const totalMonthlyExpenses = 650; // Server cost
+
+              const resultsDiv = document.getElementById('results');
+              resultsDiv.innerHTML += `
+                  <h3>Your (Business) Results</h3>
+                  <p><b>Once-Off Expenses (Table Tents):</b> R${onceOffExpenses.toFixed(2)}</p>
+                  <p><b>Total Monthly Expenses:</b> R${totalMonthlyExpenses.toFixed(2)}</p>
+                  <p><b>Total Income:</b> R${totalIncome.toFixed(2)}</p>
+              `;
+          }
+      </script>
+      <div class="image-container">
+          <img src="http://googleusercontent.com/image_generation_content/0" alt="Dark Theme Webpage">
+      </div>
+ </body>
+ </html>
