@@ -70,6 +70,7 @@
               background-color: #44446a; /* Distinct background for read-only fields */
               color: #a0a0a0;
               border-color: #3a3a5a;
+              pointer-events: none; /* Make it truly read-only */
           }
 
           .sub-total, .grand-total {
@@ -123,38 +124,46 @@
 
              <h3>Core Business Settings (Edit These)</h3>
              <label for="minWhiteLabelGames">Minimum White-label Games (Mandatory):</label>
-             <input type="number" id="minWhiteLabelGames" value="4">
+             <input type="number" id="minWhiteLabelGames" value="4" oninput="calculateAll()">
              <label for="costPerWhiteLabelGame">Cost per White-label Game (ZAR):</label>
-             <input type="number" id="costPerWhiteLabelGame" value="1500">
-             <label for="basicSetupFee">Basic Setup Fee (Lobby, Basic POS):</label>
-             <input type="number" id="basicSetupFee" value="0"> <label for="deepPOSCost">Deep POS Integration Cost (ZAR):</label>
-             <input type="number" id="deepPOSCost" value="2000">
+             <input type="number" id="costPerWhiteLabelGame" value="1500" oninput="calculateAll()">
+             <label for="deepPOSCost">Deep POS Integration Cost (ZAR):</label>
+             <input type="number" id="deepPOSCost" value="2000" oninput="calculateAll()">
              <label for="specialSyncCost">Cost Per Special Sync (ZAR):</label>
-             <input type="number" id="specialSyncCost" value="1000">
+             <input type="number" id="specialSyncCost" value="1000" oninput="calculateAll()">
              <label for="additionalGameCost">Cost Per Additional Game (ZAR):</label>
-             <input type="number" id="additionalGameCost" value="1500">
+             <input type="number" id="additionalGameCost" value="1500" oninput="calculateAll()">
              <label for="tableTentCost4">Cost for First 4 Table Tents (ZAR each):</label>
-             <input type="number" id="tableTentCost4" value="650">
+             <input type="number" id="tableTentCost4" value="650" oninput="calculateAll()">
              <label for="tableTentCostAdd">Cost per Additional Table Tent (ZAR each):</label>
-             <input type="number" id="tableTentCostAdd" value="450">
+             <input type="number" id="tableTentCostAdd" value="450" oninput="calculateAll()">
              <label for="serviceSubscriptionCost">Monthly Service Subscription (ZAR):</label>
-             <input type="number" id="serviceSubscriptionCost" value="650">
-             <label for="normalTokenWholesale">Normal Token Wholesale Cost (ZAR):</label>
-             <input type="number" id="normalTokenWholesale" value="4">
+             <input type="number" id="serviceSubscriptionCost" value="650" oninput="calculateAll()">
+
+             <hr>
+             <h3>Token Pricing (Your Side)</h3>
              <label for="normalTokenRetail">Normal Token Retail Price (ZAR):</label>
-             <input type="number" id="normalTokenRetail" value="10">
-             <label for="premiumTokenWholesale">Premium Token Wholesale Cost (ZAR):</label>
-             <input type="number" id="premiumTokenWholesale" value="8">
+             <input type="number" id="normalTokenRetail" value="10" oninput="calculateAll()">
              <label for="premiumTokenRetail">Premium Token Retail Price (ZAR):</label>
-             <input type="number" id="premiumTokenRetail" value="20">
+             <input type="number" id="premiumTokenRetail" value="20" oninput="calculateAll()">
+             <label for="wholesaleFactor">Wholesale Factor (e.g., 40 for 40% of retail):</label>
+             <input type="number" id="wholesaleFactor" value="40" min="0" max="100" oninput="calculateAll()">
+
+             <label>Normal Token Wholesale Cost (Calculated):</label>
+             <input type="number" id="normalTokenWholesale" class="read-only" readonly>
+             <label>Premium Token Wholesale Cost (Calculated):</label>
+             <input type="number" id="premiumTokenWholesale" class="read-only" readonly>
+
+             <hr>
+             <h3>My Core Expenses</h3>
              <label for="serverCostMonthly">Monthly Server Cost (ZAR):</label>
-             <input type="number" id="serverCostMonthly" value="650">
+             <input type="number" id="serverCostMonthly" value="650" oninput="calculateAll()">
              <label for="myTableTentCost">My Cost for Table Tent (per venue, ZAR):</label>
-             <input type="number" id="myTableTentCost" value="350">
+             <input type="number" id="myTableTentCost" value="350" oninput="calculateAll()">
 
              <h3>Business Summary</h3>
              <label for="numVenues">Number of Venues (Your Customers):</label>
-             <input type="number" id="numVenues" value="1" oninput="calculateAll()">
+             <input type="number" id="numVenues" value="1" min="0" oninput="calculateAll()">
 
              <div class="sub-total">
                  <span>My Total Monthly Income (All Venues):</span>
@@ -182,19 +191,19 @@
              <label>Basic Lobby/POS Integration: Included</label><br>
 
              <label for="deepPOSChosen">Deep POS Integration (Optional):</label>
-             <select id="deepPOSChosen" onchange="calculateCustomer()">
+             <select id="deepPOSChosen" onchange="calculateAll()">
                  <option value="0">No</option>
                  <option value="1">Yes</option>
              </select>
 
              <label for="numSpecialsSync">Number of Specials to Sync (Optional):</label>
-             <input type="number" id="numSpecialsSync" value="0" min="0" oninput="calculateCustomer()">
+             <input type="number" id="numSpecialsSync" value="0" min="0" oninput="calculateAll()">
 
              <label for="numAdditionalGames">Number of Additional Games (Optional):</label>
-             <input type="number" id="numAdditionalGames" value="0" min="0" oninput="calculateCustomer()">
+             <input type="number" id="numAdditionalGames" value="0" min="0" oninput="calculateAll()">
 
              <label for="numTableTents">Number of Table Tents:</label>
-             <input type="number" id="numTableTents" value="4" min="0" oninput="calculateCustomer()">
+             <input type="number" id="numTableTents" value="4" min="0" oninput="calculateAll()">
 
              <div class="sub-total">
                  <span>Customer's Total Initial Setup Fee:</span>
@@ -205,13 +214,17 @@
              <label>Monthly Service Subscription: <span id="monthlyServiceSubDisplay">R0.00</span></label><br>
 
              <label for="numNormalTokens">Number of Normal Tokens Sold (Monthly):</label>
-             <input type="number" id="numNormalTokens" value="150" min="0" oninput="calculateCustomer()">
+             <input type="number" id="numNormalTokens" value="150" min="0" oninput="calculateAll()">
              <label for="numPremiumTokens">Number of Premium Tokens Sold (Monthly):</label>
-             <input type="number" id="numPremiumTokens" value="150" min="0" oninput="calculateCustomer()">
+             <input type="number" id="numPremiumTokens" value="150" min="0" oninput="calculateAll()">
 
              <div class="sub-total">
                  <span>Customer's Total Monthly Token Wholesale Cost:</span>
                  <span id="customerMonthlyTokenWholesaleCost">R0.00</span>
+             </div>
+             <div class="sub-total">
+                 <span>Customer's Other Monthly Expenses:</span>
+                 <span id="customerOtherMonthlyExpenses">R0.00</span>
              </div>
              <div class="sub-total">
                  <span>Customer's Total Monthly Expenses:</span>
@@ -223,19 +236,19 @@
              </div>
 
              <h3>Games Controls (Venue's Payout Strategy)</h3>
-             <label for="payoutPercentage">Target Payout Percentage (% of Token Income):</label>
-             <input type="number" id="payoutPercentage" value="75" min="0" max="100" oninput="calculateCustomer()">
+             <label for="payoutPercentage">Target Payout Percentage (% of Token Retail Income):</label>
+             <input type="number" id="payoutPercentage" value="75" min="0" max="100" oninput="calculateAll()">
 
              <label for="smallWinPercentage">% of Prize Pool for Small Wins:</label>
-             <input type="number" id="smallWinPercentage" value="50" min="0" max="100" oninput="updatePrizePercentages(); calculateCustomer()">
+             <input type="number" id="smallWinPercentage" value="50" min="0" max="100" oninput="updatePrizePercentages(); calculateAll()">
              <label for="mediumWinPercentage">% of Prize Pool for Medium Wins:</label>
-             <input type="number" id="mediumWinPercentage" value="30" min="0" max="100" oninput="updatePrizePercentages(); calculateCustomer()">
+             <input type="number" id="mediumWinPercentage" value="30" min="0" max="100" oninput="updatePrizePercentages(); calculateAll()">
              <label for="jackpotPercentage">% of Prize Pool for Jackpot:</label>
-             <input type="number" id="jackpotPercentage" value="20" min="0" max="100" oninput="updatePrizePercentages(); calculateCustomer()">
+             <input type="number" id="jackpotPercentage" value="20" min="0" max="100" oninput="updatePrizePercentages(); calculateAll()">
              <p style="font-size: 0.8em; color: #aaa;">*Ensure percentages sum to 100%.</p>
 
              <div class="sub-total">
-                 <span>Customer's Monthly Token Sales Profit (Before Prizes):</span>
+                 <span>Customer's Monthly Token Sales Profit (before Prizes):</span>
                  <span id="customerTokenSalesProfit">R0.00</span>
              </div>
              <div class="sub-total">
@@ -243,7 +256,7 @@
                  <span id="customerPrizePoolValue">R0.00</span>
              </div>
              <div class="sub-total">
-                 <span>Customer's Remainder (Profit After Prizes):</span>
+                 <span>Customer's Remainder (Profit After Prizes & Fixed Costs):</span>
                  <span id="customerRemainderProfit">R0.00</span>
              </div>
 
@@ -262,7 +275,7 @@
          <p>Optional Specials Sync Cost: <span id="resSpecialsSync">R0.00</span></p>
          <p>Optional Additional Games Cost: <span id="resAdditionalGames">R0.00</span></p>
          <p>Table Tents Cost: <span id="resTableTents">R0.00</span></p>
-         <p>Total Customer's Initial Setup Fee: <span id="resCustomerInitialSetupFee">R0.00</span></p>
+         <p><b>Total Customer's Initial Setup Fee:</b> <span id="resCustomerInitialSetupFee">R0.00</span></p>
          <hr>
          <p>Monthly Service Subscription: <span id="resMonthlyServiceSub">R0.00</span></p>
          <p>Monthly Normal Token Wholesale Cost: <span id="resNormalTokenWholesaleCost">R0.00</span></p>
@@ -273,14 +286,15 @@
          <p>Monthly Premium Token Retail Income: <span id="resPremiumTokenRetailIncome">R0.00</span></p>
          <p><b>Total Customer's Monthly Token Income:</b> <span id="resCustomerTotalMonthlyTokenIncome">R0.00</span></p>
          <hr>
-         <p>Customer's Monthly Token Sales Profit (Before Prizes): <span id="resCustomerTokenSalesProfit">R0.00</span></p>
-         <p>Customer's Prize Pool Value: <span id="resCustomerPrizePoolValue">R0.00</span></p>
-         <p>Customer's Profit Remainder (After Prizes): <span id="resCustomerRemainderProfit">R0.00</span></p>
+         <p>Customer's Monthly Token Sales Profit (Income - Token Wholesale Cost): <span id="resCustomerTokenSalesProfit">R0.00</span></p>
+         <p>Customer's Prize Pool Value (from Token Sales Profit * Payout %): <span id="resCustomerPrizePoolValue">R0.00</span></p>
+         <p>Customer's Profit Remainder (Token Sales Profit - Prize Pool - Service Sub): <span id="resCustomerRemainderProfit">R0.00</span></p>
          <p>Months to ROI: <span id="resMonthsToROI">0 Months</span></p>
      </div>
 
      <div id="my-results">
          <h2>My (Business) Projected Summary</h2>
+         <p>My Total Monthly Income from Customer Remainders (per venue): <span id="resMyIncomePerVenue">R0.00</span></p>
          <p>My Total Monthly Income from all Venues: <span id="resMyTotalMonthlyIncome">R0.00</span></p>
          <p>My Total Monthly Expenses (Server Cost): <span id="resMyTotalMonthlyExpenses">R0.00</span></p>
          <p><b>My Net Monthly Profit (from all venues):</b> <span id="resMyNetMonthlyProfit">R0.00</span></p>
@@ -289,14 +303,7 @@
      </div>
 
      <script>
-         document.addEventListener('DOMContentLoaded', () => {
-             // Attach event listeners to all input fields to trigger calculation
-             document.querySelectorAll('input[type="number"], select').forEach(input => {
-                 input.addEventListener('input', calculateAll);
-                 input.addEventListener('change', calculateAll); // For select elements
-             });
-             calculateAll(); // Initial calculation on page load
-         });
+         document.addEventListener('DOMContentLoaded', calculateAll); // Initial calculation on page load
 
          function getVal(id) {
              return parseFloat(document.getElementById(id).value) || 0;
@@ -305,7 +312,10 @@
          function setDisplay(id, value, isCurrency = true) {
              const element = document.getElementById(id);
              if (element) {
-                 element.textContent = isCurrency ? `R${value.toFixed(2)}` : value.toFixed(0);
+                 element.textContent = isCurrency ? `R${value.toFixed(2)}` : (value.toFixed(2));
+                 if (!isCurrency) { // For ROI, show 'Months' if not NaN/Infinity
+                    element.textContent = isFinite(value) && value > 0 ? `${value.toFixed(1)} Months` : 'N/A';
+                 }
              }
          }
 
@@ -316,15 +326,15 @@
 
              let total = small + medium + jackpot;
              if (total > 100) {
-                 alert("Prize pool percentages cannot exceed 100%. Please adjust.");
-                 // Optionally, you can reset or adjust values here
+                 // Optionally, alert or auto-adjust. For now, just allow user to see the sum > 100
+                 // console.warn("Prize pool percentages exceed 100%. Please adjust.");
              }
          }
 
-         let customerCalculatedProfit = 0; // Store this for the business section
+         let customerCalculatedProfitRemainder = 0; // Store this for the business section
 
          function calculateCustomer() {
-             // Get business variables
+             // Get business variables (which are inputs on "My" side)
              const minWhiteLabelGames = getVal('minWhiteLabelGames');
              const costPerWhiteLabelGame = getVal('costPerWhiteLabelGame');
              const deepPOSCost = getVal('deepPOSCost');
@@ -333,10 +343,15 @@
              const tableTentCost4 = getVal('tableTentCost4');
              const tableTentCostAdd = getVal('tableTentCostAdd');
              const serviceSubscriptionCost = getVal('serviceSubscriptionCost');
-             const normalTokenWholesale = getVal('normalTokenWholesale');
              const normalTokenRetail = getVal('normalTokenRetail');
-             const premiumTokenWholesale = getVal('premiumTokenWholesale');
              const premiumTokenRetail = getVal('premiumTokenRetail');
+             const wholesaleFactor = getVal('wholesaleFactor') / 100;
+
+             // Calculate wholesale costs based on retail and factor
+             const normalTokenWholesale = normalTokenRetail * wholesaleFactor;
+             const premiumTokenWholesale = premiumTokenRetail * wholesaleFactor;
+             document.getElementById('normalTokenWholesale').value = normalTokenWholesale.toFixed(2);
+             document.getElementById('premiumTokenWholesale').value = premiumTokenWholesale.toFixed(2);
 
              // Get customer inputs
              const deepPOSChosen = getVal('deepPOSChosen');
@@ -346,50 +361,58 @@
              const numNormalTokens = getVal('numNormalTokens');
              const numPremiumTokens = getVal('numPremiumTokens');
              const payoutPercentage = getVal('payoutPercentage') / 100;
-             const smallWinPercentage = getVal('smallWinPercentage') / 100;
-             const mediumWinPercentage = getVal('mediumWinPercentage') / 100;
-             const jackpotPercentage = getVal('jackpotPercentage') / 100;
 
-             // --- Initial Set-Up Fee ---
+             // --- Initial Set-Up Fee (Customer's Perspective) ---
              const mandatoryWhiteLabelCost = minWhiteLabelGames * costPerWhiteLabelGame;
              const deepPOSFee = deepPOSChosen * deepPOSCost;
              const specialsSyncFee = numSpecialsSync * specialSyncCost;
              const additionalGamesFee = numAdditionalGames * additionalGameCost;
              let tableTentsFee = 0;
              if (numTableTents > 0) {
-                 tableTentsFee = (numTableTents >= 4 ? (4 * tableTentCost4) + ((numTableTents - 4) * tableTentCostAdd) : numTableTents * tableTentCost4);
+                 tableTentsFee = (numTableTents >= 4 ? (4 * tableTentCost4) + Math.max(0, (numTableTents - 4)) * tableTentCostAdd : numTableTents * tableTentCost4);
              }
              const customerInitialSetupFee = mandatoryWhiteLabelCost + deepPOSFee + specialsSyncFee + additionalGamesFee + tableTentsFee;
 
-             // --- Monthly Expenses ---
+             // --- Monthly Operational Costs & Income (Customer's Perspective) ---
              const monthlyServiceSub = serviceSubscriptionCost;
              const monthlyNormalTokenWholesaleCost = numNormalTokens * normalTokenWholesale;
              const monthlyPremiumTokenWholesaleCost = numPremiumTokens * premiumTokenWholesale;
-             const customerTotalMonthlyTokenWholesaleCost = monthlyNormalTokenWholesaleCost + monthlyPremiumTokenWholesaleCost;
-             const customerTotalMonthlyExpenses = monthlyServiceSub + customerTotalMonthlyTokenWholesaleCost;
+             const customerMonthlyTokenWholesaleCost = monthlyNormalTokenWholesaleCost + monthlyPremiumTokenWholesaleCost;
 
-             // --- Monthly Income ---
+             const customerOtherMonthlyExpenses = monthlyServiceSub; // Currently only service subscription
+             const customerTotalMonthlyExpenses = customerMonthlyTokenWholesaleCost + customerOtherMonthlyExpenses;
+
              const monthlyNormalTokenRetailIncome = numNormalTokens * normalTokenRetail;
              const monthlyPremiumTokenRetailIncome = numPremiumTokens * premiumTokenRetail;
              const customerTotalMonthlyTokenIncome = monthlyNormalTokenRetailIncome + monthlyPremiumTokenRetailIncome;
 
-             // --- Covering Expenses & Games Controls ---
-             const customerTokenSalesProfit = customerTotalMonthlyTokenIncome - customerTotalMonthlyTokenWholesaleCost;
-             const prizePoolValue = customerTokenSalesProfit * payoutPercentage; // Prize pool from profit on tokens
-             const remainderProfit = customerTokenSalesProfit - prizePoolValue - monthlyServiceSub; // Profit after prizes AND service sub
+             // --- Covering Expenses & Games Controls (Customer's Profit Calculations) ---
+             // Profit from selling tokens *after* buying them wholesale
+             const customerTokenSalesProfit = customerTotalMonthlyTokenIncome - customerMonthlyTokenWholesaleCost;
 
+             // Prize pool is a percentage of the *retail income* of tokens sold
+             const prizePoolValue = customerTotalMonthlyTokenIncome * payoutPercentage;
+
+             // Remainder: What the venue keeps after token wholesale costs, prizes, AND fixed monthly subscription
+             // Your earlier model had Prize Pool from token sales profit - this is typically from total retail income
+             // Corrected logic: Venue's profit is Retail Income - Wholesale Cost - Prize Pool - Service Subscription
+             const customerRemainderProfit = customerTotalMonthlyTokenIncome - customerMonthlyTokenWholesaleCost - prizePoolValue - monthlyServiceSub;
+
+             // --- Months to ROI Calculation (Customer's Perspective) ---
+             // ROI = Initial Investment / Monthly Net Profit (Remainder)
              const monthsToROI = customerRemainderProfit > 0 ? customerInitialSetupFee / customerRemainderProfit : 0;
 
              // --- Update Customer's Display ---
              setDisplay('mandatoryWhiteLabelCost', mandatoryWhiteLabelCost);
              setDisplay('monthlyServiceSubDisplay', monthlyServiceSub);
              setDisplay('customerInitialSetupFee', customerInitialSetupFee);
-             setDisplay('customerMonthlyTokenWholesaleCost', customerTotalMonthlyTokenWholesaleCost);
+             setDisplay('customerMonthlyTokenWholesaleCost', customerMonthlyTokenWholesaleCost);
+             setDisplay('customerOtherMonthlyExpenses', customerOtherMonthlyExpenses); // Display other expenses separately
              setDisplay('customerTotalMonthlyExpenses', customerTotalMonthlyExpenses);
              setDisplay('customerTotalMonthlyTokenIncome', customerTotalMonthlyTokenIncome);
              setDisplay('customerTokenSalesProfit', customerTokenSalesProfit);
              setDisplay('customerPrizePoolValue', prizePoolValue);
-             setDisplay('customerRemainderProfit', remainderProfit);
+             setDisplay('customerRemainderProfit', customerRemainderProfit);
              setDisplay('monthsToROI', monthsToROI, false);
 
              // --- Update Detailed Customer Results ---
@@ -408,11 +431,11 @@
              setDisplay('resCustomerTotalMonthlyTokenIncome', customerTotalMonthlyTokenIncome);
              setDisplay('resCustomerTokenSalesProfit', customerTokenSalesProfit);
              setDisplay('resCustomerPrizePoolValue', prizePoolValue);
-             setDisplay('resCustomerRemainderProfit', remainderProfit);
+             setDisplay('resCustomerRemainderProfit', customerRemainderProfit);
              setDisplay('resMonthsToROI', monthsToROI, false);
 
              // Store profit for business calculation
-             customerCalculatedProfit = remainderProfit;
+             customerCalculatedProfitRemainder = customerRemainderProfit;
          }
 
          function calculateMyBusiness() {
@@ -421,11 +444,14 @@
              const myTableTentCost = getVal('myTableTentCost');
 
              // --- Income ---
-             const myTotalMonthlyIncome = numVenues * customerCalculatedProfit; // My income is the customer's profit remainder
+             // My income is the sum of the 'Remainder' profit from each customer venue
+             const myTotalMonthlyIncome = numVenues * customerCalculatedProfitRemainder;
 
              // --- Expenses ---
              const myTotalMonthlyExpenses = serverCostMonthly;
-             // Calculate once-off table tent cost based on number of venues
+             // Calculate once-off table tent cost based on number of venues that chose tents
+             // Note: This needs to be refined if not all venues choose tents.
+             // For simplicity, we assume `numVenues` means number of venues *you* supply table tents to.
              const myTotalOnceOffExpenses = numVenues * myTableTentCost;
 
              const myNetMonthlyProfit = myTotalMonthlyIncome - myTotalMonthlyExpenses;
@@ -437,6 +463,7 @@
              setDisplay('myTotalOnceOffExpenses', myTotalOnceOffExpenses);
 
              // --- Update Detailed My Business Results ---
+             setDisplay('resMyIncomePerVenue', customerCalculatedProfitRemainder); // Display per venue for clarity
              setDisplay('resMyTotalMonthlyIncome', myTotalMonthlyIncome);
              setDisplay('resMyTotalMonthlyExpenses', myTotalMonthlyExpenses);
              setDisplay('resMyNetMonthlyProfit', myNetMonthlyProfit);
@@ -444,7 +471,9 @@
          }
 
          function calculateAll() {
+             // First, calculate customer side to get the remainder profit
              calculateCustomer();
+             // Then, use that remainder profit to calculate your business side
              calculateMyBusiness();
          }
      </script>
