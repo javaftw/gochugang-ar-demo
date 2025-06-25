@@ -3,202 +3,450 @@
  <head>
      <meta charset="UTF-8">
      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <title>Cost & Profit Calculator</title>
+     <title>Dynamic Cost & Profit Calculator</title>
      <style>
           body {
-              font-family: sans-serif;
-              background-color: #121212;
-              color: #f0f0f0;
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              background-color: #1a1a2e; /* Darker background */
+              color: #e0e0e0;
               margin: 0;
               padding: 20px;
+              line-height: 1.6;
           }
 
-          h2 {
-              color: #bb86fc;
+          h2, h3 {
+              color: #bb86fc; /* Purple accent */
+              border-bottom: 2px solid #4a148c; /* Darker purple line */
+              padding-bottom: 5px;
+              margin-bottom: 15px;
           }
 
           .container {
               display: flex;
               flex-wrap: wrap;
-              justify-content: space-between;
+              gap: 25px; /* Spacing between sections */
+              justify-content: center; /* Center content on larger screens */
+              max-width: 1200px;
+              margin: 20px auto;
           }
 
           .section {
-              width: 48%;
-              margin-bottom: 20px;
-              padding: 20px;
-              background-color: #1e1e1e;
-              border-radius: 8px;
+              flex: 1; /* Allows sections to grow and shrink */
+              min-width: 300px; /* Minimum width before wrapping */
+              padding: 25px;
+              background-color: #2a2a4a; /* Slightly lighter dark background for sections */
+              border-radius: 12px;
+              box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+              display: flex; /* Use flexbox for internal layout */
+              flex-direction: column; /* Stack children vertically */
           }
 
           label {
               display: block;
-              margin-bottom: 5px;
+              margin-bottom: 8px;
+              font-weight: bold;
+              color: #c9c9c9;
           }
 
-          input, select {
-              width: 100%;
-              padding: 8px;
-              margin-bottom: 10px;
-              border: 1px solid #333;
-              border-radius: 4px;
-              background-color: #333;
-              color: #f0f0f0;
+          input[type="number"] {
+              width: calc(100% - 20px); /* Account for padding */
+              padding: 10px;
+              margin-bottom: 15px;
+              border: 1px solid #4f4f7a; /* Darker border */
+              border-radius: 6px;
+              background-color: #3a3a5a; /* Even darker input background */
+              color: #e0e0e0;
+              font-size: 1em;
+              box-sizing: border-box; /* Include padding in width */
           }
 
-          button {
-              background-color: #bb86fc;
-              color: white;
+          input[type="number"]:focus {
+              outline: none;
+              border-color: #bb86fc; /* Highlight on focus */
+              box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.3); /* Glow effect */
+          }
+
+          .read-only {
+              background-color: #44446a; /* Distinct background for read-only fields */
+              color: #a0a0a0;
+              border-color: #3a3a5a;
+          }
+
+          .sub-total, .grand-total {
+              margin-top: 15px;
               padding: 10px 15px;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-          }
-
-          button:hover {
-              background-color: #9c6ddc;
-          }
-
-          #results {
-              margin-top: 20px;
-              padding: 15px;
-              background-color: #2a2a2a;
+              background-color: #3e3e6e; /* Background for totals */
               border-radius: 8px;
+              font-weight: bold;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
           }
 
-          .image-container {
+          .sub-total span:last-child, .grand-total span:last-child {
+              color: #bb86fc; /* Accent color for total amount */
+              font-size: 1.1em;
+          }
+
+          #customer-results, #my-results {
               margin-top: 20px;
-              text-align: center;
+              padding: 20px;
+              background-color: #2a2a4a;
+              border-radius: 12px;
+              box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
           }
 
-          .image-container img {
-              max-width: 100%;
-              height: auto;
-              border-radius: 8px;
+          #customer-results p, #my-results p {
+              margin-bottom: 8px;
+          }
+
+          /* Responsive adjustments */
+          @media (max-width: 768px) {
+              .section {
+                  width: 100%;
+                  min-width: unset; /* Remove min-width for full flexibility */
+              }
+              .container {
+                  flex-direction: column; /* Stack columns on smaller screens */
+                  gap: 15px;
+              }
+              body {
+                  padding: 15px;
+              }
           }
       </style>
  </head>
  <body>
      <div class="container">
          <div class="section">
-             <h2>Customer (Venue) Perspective</h2>
-             <h3>Initial Set-Up Fee</h3>
-             <label>White-labeling (4 games @ R1500 each): R6000</label><br>
-             <label>Branded game lobby & basic menu/POS integration: Mandatory</label><br>
-             <label>Deep POS Integration (Optional, R2000+):</label>
-             <input type="number" id="deepPOS" value="0">
-             <label>Specials Sync (Optional, R1000 per special):</label>
-             <input type="number" id="specialsSync" value="0">
-             <label>Additional Games (R1500 each):</label>
-             <input type="number" id="additionalGames" value="0">
-             <label>Table Tents (4 @ R650, R450 per additional):</label>
-             <input type="number" id="tableTents" value="0">
+             <h2>My (Business) Variables & Summary</h2>
 
-             <h3>Monthly Expenses</h3>
-             <label>Service Subscription: R650</label><br>
-             <label>Normal Tokens (150 @ R4 wholesale, R10 retail):</label><br>
-             <label>Premium Tokens (150 @ R8 wholesale, R20 retail):</label><br>
+             <h3>Core Business Settings (Edit These)</h3>
+             <label for="minWhiteLabelGames">Minimum White-label Games (Mandatory):</label>
+             <input type="number" id="minWhiteLabelGames" value="4">
+             <label for="costPerWhiteLabelGame">Cost per White-label Game (ZAR):</label>
+             <input type="number" id="costPerWhiteLabelGame" value="1500">
+             <label for="basicSetupFee">Basic Setup Fee (Lobby, Basic POS):</label>
+             <input type="number" id="basicSetupFee" value="0"> <label for="deepPOSCost">Deep POS Integration Cost (ZAR):</label>
+             <input type="number" id="deepPOSCost" value="2000">
+             <label for="specialSyncCost">Cost Per Special Sync (ZAR):</label>
+             <input type="number" id="specialSyncCost" value="1000">
+             <label for="additionalGameCost">Cost Per Additional Game (ZAR):</label>
+             <input type="number" id="additionalGameCost" value="1500">
+             <label for="tableTentCost4">Cost for First 4 Table Tents (ZAR each):</label>
+             <input type="number" id="tableTentCost4" value="650">
+             <label for="tableTentCostAdd">Cost per Additional Table Tent (ZAR each):</label>
+             <input type="number" id="tableTentCostAdd" value="450">
+             <label for="serviceSubscriptionCost">Monthly Service Subscription (ZAR):</label>
+             <input type="number" id="serviceSubscriptionCost" value="650">
+             <label for="normalTokenWholesale">Normal Token Wholesale Cost (ZAR):</label>
+             <input type="number" id="normalTokenWholesale" value="4">
+             <label for="normalTokenRetail">Normal Token Retail Price (ZAR):</label>
+             <input type="number" id="normalTokenRetail" value="10">
+             <label for="premiumTokenWholesale">Premium Token Wholesale Cost (ZAR):</label>
+             <input type="number" id="premiumTokenWholesale" value="8">
+             <label for="premiumTokenRetail">Premium Token Retail Price (ZAR):</label>
+             <input type="number" id="premiumTokenRetail" value="20">
+             <label for="serverCostMonthly">Monthly Server Cost (ZAR):</label>
+             <input type="number" id="serverCostMonthly" value="650">
+             <label for="myTableTentCost">My Cost for Table Tent (per venue, ZAR):</label>
+             <input type="number" id="myTableTentCost" value="350">
 
-             <h3>Monthly Income</h3>
-             <label>Total Number of Tokens (Normal + Premium):</label>
-             <input type="number" id="totalTokens" value="300">
+             <h3>Business Summary</h3>
+             <label for="numVenues">Number of Venues (Your Customers):</label>
+             <input type="number" id="numVenues" value="1" oninput="calculateAll()">
 
-             <h3>Games Controls</h3>
-              <label>Target Payout Percentage (%):</label>
-              <input type="number" id="payoutPercentage" value="75">
-              <label>% of Prize Pool for Small Wins:</label>
-              <input type="number" id="smallWinPercentage" value="50">
-              <label>% of Prize Pool for Medium Wins:</label>
-              <input type="number" id="mediumWinPercentage" value="30">
-              <label>% of Prize Pool for Jackpot:</label>
-              <input type="number" id="jackpotPercentage" value="20">
-              <label>Average Plays per Normal Token:</label>
-              <input type="number" id="normalTokenPlays" value="2">
-              <label>Average Plays per Premium Token:</label>
-              <input type="number" id="premiumTokenPlays" value="2">
-
-             <button onclick="calculateCustomer()">Calculate</button>
+             <div class="sub-total">
+                 <span>My Total Monthly Income (All Venues):</span>
+                 <span id="myTotalMonthlyIncome">R0.00</span>
+             </div>
+             <div class="sub-total">
+                 <span>My Total Monthly Expenses:</span>
+                 <span id="myTotalMonthlyExpenses">R0.00</span>
+             </div>
+             <div class="sub-total">
+                 <span>My Net Monthly Profit:</span>
+                 <span id="myNetMonthlyProfit">R0.00</span>
+             </div>
+             <div class="sub-total">
+                 <span>My Total Once-Off Expenses (All Venues):</span>
+                 <span id="myTotalOnceOffExpenses">R0.00</span>
+             </div>
          </div>
 
          <div class="section">
-             <h2>Your (Business) Perspective</h2>
-             <h3>Expenses</h3>
-             <label>Server Cost (Monthly): R650</label><br>
-             <label>Table Tents (Per Customer, Once-Off @ R350):</label>
-             <input type="number" id="tableTentsBusiness" value="0">
+             <h2>Customer (Venue) Perspective</h2>
 
-             <h3>Income</h3>
-             <label>Number of Venues:</label>
-             <input type="number" id="numVenues" value="1">
-             <label>Income per Venue (Calculated from Customer Section):</label>
-             <input type="number" id="incomePerVenue" readonly>
+             <h3>Initial Set-Up Fee</h3>
+             <label>Mandatory White-labeling (calculated): <span id="mandatoryWhiteLabelCost">R0.00</span></label><br>
+             <label>Basic Lobby/POS Integration: Included</label><br>
 
-             <button onclick="calculateBusiness()">Calculate</button>
+             <label for="deepPOSChosen">Deep POS Integration (Optional):</label>
+             <select id="deepPOSChosen" onchange="calculateCustomer()">
+                 <option value="0">No</option>
+                 <option value="1">Yes</option>
+             </select>
+
+             <label for="numSpecialsSync">Number of Specials to Sync (Optional):</label>
+             <input type="number" id="numSpecialsSync" value="0" min="0" oninput="calculateCustomer()">
+
+             <label for="numAdditionalGames">Number of Additional Games (Optional):</label>
+             <input type="number" id="numAdditionalGames" value="0" min="0" oninput="calculateCustomer()">
+
+             <label for="numTableTents">Number of Table Tents:</label>
+             <input type="number" id="numTableTents" value="4" min="0" oninput="calculateCustomer()">
+
+             <div class="sub-total">
+                 <span>Customer's Total Initial Setup Fee:</span>
+                 <span id="customerInitialSetupFee">R0.00</span>
+             </div>
+
+             <h3>Monthly Operational Costs & Income</h3>
+             <label>Monthly Service Subscription: <span id="monthlyServiceSubDisplay">R0.00</span></label><br>
+
+             <label for="numNormalTokens">Number of Normal Tokens Sold (Monthly):</label>
+             <input type="number" id="numNormalTokens" value="150" min="0" oninput="calculateCustomer()">
+             <label for="numPremiumTokens">Number of Premium Tokens Sold (Monthly):</label>
+             <input type="number" id="numPremiumTokens" value="150" min="0" oninput="calculateCustomer()">
+
+             <div class="sub-total">
+                 <span>Customer's Total Monthly Token Wholesale Cost:</span>
+                 <span id="customerMonthlyTokenWholesaleCost">R0.00</span>
+             </div>
+             <div class="sub-total">
+                 <span>Customer's Total Monthly Expenses:</span>
+                 <span id="customerTotalMonthlyExpenses">R0.00</span>
+             </div>
+             <div class="sub-total">
+                 <span>Customer's Total Monthly Token Income (Retail):</span>
+                 <span id="customerTotalMonthlyTokenIncome">R0.00</span>
+             </div>
+
+             <h3>Games Controls (Venue's Payout Strategy)</h3>
+             <label for="payoutPercentage">Target Payout Percentage (% of Token Income):</label>
+             <input type="number" id="payoutPercentage" value="75" min="0" max="100" oninput="calculateCustomer()">
+
+             <label for="smallWinPercentage">% of Prize Pool for Small Wins:</label>
+             <input type="number" id="smallWinPercentage" value="50" min="0" max="100" oninput="updatePrizePercentages(); calculateCustomer()">
+             <label for="mediumWinPercentage">% of Prize Pool for Medium Wins:</label>
+             <input type="number" id="mediumWinPercentage" value="30" min="0" max="100" oninput="updatePrizePercentages(); calculateCustomer()">
+             <label for="jackpotPercentage">% of Prize Pool for Jackpot:</label>
+             <input type="number" id="jackpotPercentage" value="20" min="0" max="100" oninput="updatePrizePercentages(); calculateCustomer()">
+             <p style="font-size: 0.8em; color: #aaa;">*Ensure percentages sum to 100%.</p>
+
+             <div class="sub-total">
+                 <span>Customer's Monthly Token Sales Profit (Before Prizes):</span>
+                 <span id="customerTokenSalesProfit">R0.00</span>
+             </div>
+             <div class="sub-total">
+                 <span>Customer's Prize Pool Value:</span>
+                 <span id="customerPrizePoolValue">R0.00</span>
+             </div>
+             <div class="sub-total">
+                 <span>Customer's Remainder (Profit After Prizes):</span>
+                 <span id="customerRemainderProfit">R0.00</span>
+             </div>
+
+             <h3>ROI Calculation</h3>
+             <div class="sub-total">
+                 <span>Months to ROI (Initial Investment / Monthly Remainder):</span>
+                 <span id="monthsToROI">0 Months</span>
+             </div>
          </div>
      </div>
 
-     <div id="results"></div>
+     <div id="customer-results">
+         <h2>Customer's Projected Monthly Breakdown</h2>
+         <p>Mandatory White-label Cost: <span id="resMandatoryWhiteLabel">R0.00</span></p>
+         <p>Optional Deep POS Integration Cost: <span id="resDeepPOS">R0.00</span></p>
+         <p>Optional Specials Sync Cost: <span id="resSpecialsSync">R0.00</span></p>
+         <p>Optional Additional Games Cost: <span id="resAdditionalGames">R0.00</span></p>
+         <p>Table Tents Cost: <span id="resTableTents">R0.00</span></p>
+         <p>Total Customer's Initial Setup Fee: <span id="resCustomerInitialSetupFee">R0.00</span></p>
+         <hr>
+         <p>Monthly Service Subscription: <span id="resMonthlyServiceSub">R0.00</span></p>
+         <p>Monthly Normal Token Wholesale Cost: <span id="resNormalTokenWholesaleCost">R0.00</span></p>
+         <p>Monthly Premium Token Wholesale Cost: <span id="resPremiumTokenWholesaleCost">R0.00</span></p>
+         <p><b>Total Customer's Monthly Expenses:</b> <span id="resCustomerTotalMonthlyExpenses">R0.00</span></p>
+         <hr>
+         <p>Monthly Normal Token Retail Income: <span id="resNormalTokenRetailIncome">R0.00</span></p>
+         <p>Monthly Premium Token Retail Income: <span id="resPremiumTokenRetailIncome">R0.00</span></p>
+         <p><b>Total Customer's Monthly Token Income:</b> <span id="resCustomerTotalMonthlyTokenIncome">R0.00</span></p>
+         <hr>
+         <p>Customer's Monthly Token Sales Profit (Before Prizes): <span id="resCustomerTokenSalesProfit">R0.00</span></p>
+         <p>Customer's Prize Pool Value: <span id="resCustomerPrizePoolValue">R0.00</span></p>
+         <p>Customer's Profit Remainder (After Prizes): <span id="resCustomerRemainderProfit">R0.00</span></p>
+         <p>Months to ROI: <span id="resMonthsToROI">0 Months</span></p>
+     </div>
+
+     <div id="my-results">
+         <h2>My (Business) Projected Summary</h2>
+         <p>My Total Monthly Income from all Venues: <span id="resMyTotalMonthlyIncome">R0.00</span></p>
+         <p>My Total Monthly Expenses (Server Cost): <span id="resMyTotalMonthlyExpenses">R0.00</span></p>
+         <p><b>My Net Monthly Profit (from all venues):</b> <span id="resMyNetMonthlyProfit">R0.00</span></p>
+         <hr>
+         <p>My Total Once-Off Expenses for Table Tents (All Venues): <span id="resMyTotalOnceOffExpenses">R0.00</span></p>
+     </div>
 
      <script>
-          function calculateCustomer() {
-              const deepPOS = parseFloat(document.getElementById('deepPOS').value) || 0;
-              const specialsSync = parseFloat(document.getElementById('specialsSync').value) || 0;
-              const additionalGames = parseFloat(document.getElementById('additionalGames').value) || 0;
-              const tableTents = parseFloat(document.getElementById('tableTents').value) || 0;
-              const totalTokens = parseFloat(document.getElementById('totalTokens').value) || 0;
-              const payoutPercentage = parseFloat(document.getElementById('payoutPercentage').value) / 100;
-              const smallWinPercentage = parseFloat(document.getElementById('smallWinPercentage').value) / 100;
-              const mediumWinPercentage = parseFloat(document.getElementById('mediumWinPercentage').value) / 100;
-              const jackpotPercentage = parseFloat(document.getElementById('jackpotPercentage').value) / 100;
-              const normalTokenPlays = parseFloat(document.getElementById('normalTokenPlays').value) || 1;
-              const premiumTokenPlays = parseFloat(document.getElementById('premiumTokenPlays').value) || 1;
+         document.addEventListener('DOMContentLoaded', () => {
+             // Attach event listeners to all input fields to trigger calculation
+             document.querySelectorAll('input[type="number"], select').forEach(input => {
+                 input.addEventListener('input', calculateAll);
+                 input.addEventListener('change', calculateAll); // For select elements
+             });
+             calculateAll(); // Initial calculation on page load
+         });
 
-              const initialSetupFee = 6000 + deepPOS + (specialsSync * 1000) + (additionalGames * 1500) + (tableTents > 4 ? (4 * 650) + ((tableTents - 4) * 450) : tableTents * 650);
-              const monthlyExpenses = 650 + (150 * 4) + (150 * 8); // Service sub + tokens
-              const tokenIncome = totalTokens * ((150/totalTokens)*10 + (150/totalTokens)*20); // Assuming equal split for now
-              const tokenSalesProfit = tokenIncome - monthlyExpenses;
-              const prizePoolValue = tokenIncome * payoutPercentage;
-              const smallWinPool = prizePoolValue * smallWinPercentage;
-              const mediumWinPool = prizePoolValue * mediumWinPercentage;
-              const jackpotPool = prizePoolValue * jackpotPercentage;
+         function getVal(id) {
+             return parseFloat(document.getElementById(id).value) || 0;
+         }
 
-              const resultsDiv = document.getElementById('results');
-              resultsDiv.innerHTML = `
-                  <h3>Customer (Venue) Results</h3>
-                  <p><b>Initial Set-Up Fee:</b> R${initialSetupFee.toFixed(2)}</p>
-                  <p><b>Monthly Expenses:</b> R${monthlyExpenses.toFixed(2)}</p>
-                  <p><b>Total Token Income:</b> R${tokenIncome.toFixed(2)}</p>
-                  <p><b>Token Sales Profit:</b> R${tokenSalesProfit.toFixed(2)}</p>
-                  <p><b>Prize Pool Value:</b> R${prizePoolValue.toFixed(2)}</p>
-                  <p><b>Small Win Pool:</b> R${smallWinPool.toFixed(2)}</p>
-                  <p><b>Medium Win Pool:</b> R${mediumWinPool.toFixed(2)}</p>
-                  <p><b>Jackpot Pool:</b> R${jackpotPool.toFixed(2)}</p>
-              `;
+         function setDisplay(id, value, isCurrency = true) {
+             const element = document.getElementById(id);
+             if (element) {
+                 element.textContent = isCurrency ? `R${value.toFixed(2)}` : value.toFixed(0);
+             }
+         }
 
-              // Update income per venue for the business perspective
-              document.getElementById('incomePerVenue').value = tokenSalesProfit.toFixed(2);
-          }
+         function updatePrizePercentages() {
+             let small = getVal('smallWinPercentage');
+             let medium = getVal('mediumWinPercentage');
+             let jackpot = getVal('jackpotPercentage');
 
-          function calculateBusiness() {
-              const tableTentsBusiness = parseFloat(document.getElementById('tableTentsBusiness').value) || 0;
-              const numVenues = parseFloat(document.getElementById('numVenues').value) || 1;
-              const incomePerVenue = parseFloat(document.getElementById('incomePerVenue').value) || 0;
+             let total = small + medium + jackpot;
+             if (total > 100) {
+                 alert("Prize pool percentages cannot exceed 100%. Please adjust.");
+                 // Optionally, you can reset or adjust values here
+             }
+         }
 
-              const onceOffExpenses = tableTentsBusiness * 350;
-              const totalIncome = numVenues * incomePerVenue;
-              const totalMonthlyExpenses = 650; // Server cost
+         let customerCalculatedProfit = 0; // Store this for the business section
 
-              const resultsDiv = document.getElementById('results');
-              resultsDiv.innerHTML += `
-                  <h3>Your (Business) Results</h3>
-                  <p><b>Once-Off Expenses (Table Tents):</b> R${onceOffExpenses.toFixed(2)}</p>
-                  <p><b>Total Monthly Expenses:</b> R${totalMonthlyExpenses.toFixed(2)}</p>
-                  <p><b>Total Income:</b> R${totalIncome.toFixed(2)}</p>
-              `;
-          }
-      </script>
-      <div class="image-container">
-          <img src="http://googleusercontent.com/image_generation_content/0" alt="Dark Theme Webpage">
-      </div>
+         function calculateCustomer() {
+             // Get business variables
+             const minWhiteLabelGames = getVal('minWhiteLabelGames');
+             const costPerWhiteLabelGame = getVal('costPerWhiteLabelGame');
+             const deepPOSCost = getVal('deepPOSCost');
+             const specialSyncCost = getVal('specialSyncCost');
+             const additionalGameCost = getVal('additionalGameCost');
+             const tableTentCost4 = getVal('tableTentCost4');
+             const tableTentCostAdd = getVal('tableTentCostAdd');
+             const serviceSubscriptionCost = getVal('serviceSubscriptionCost');
+             const normalTokenWholesale = getVal('normalTokenWholesale');
+             const normalTokenRetail = getVal('normalTokenRetail');
+             const premiumTokenWholesale = getVal('premiumTokenWholesale');
+             const premiumTokenRetail = getVal('premiumTokenRetail');
+
+             // Get customer inputs
+             const deepPOSChosen = getVal('deepPOSChosen');
+             const numSpecialsSync = getVal('numSpecialsSync');
+             const numAdditionalGames = getVal('numAdditionalGames');
+             const numTableTents = getVal('numTableTents');
+             const numNormalTokens = getVal('numNormalTokens');
+             const numPremiumTokens = getVal('numPremiumTokens');
+             const payoutPercentage = getVal('payoutPercentage') / 100;
+             const smallWinPercentage = getVal('smallWinPercentage') / 100;
+             const mediumWinPercentage = getVal('mediumWinPercentage') / 100;
+             const jackpotPercentage = getVal('jackpotPercentage') / 100;
+
+             // --- Initial Set-Up Fee ---
+             const mandatoryWhiteLabelCost = minWhiteLabelGames * costPerWhiteLabelGame;
+             const deepPOSFee = deepPOSChosen * deepPOSCost;
+             const specialsSyncFee = numSpecialsSync * specialSyncCost;
+             const additionalGamesFee = numAdditionalGames * additionalGameCost;
+             let tableTentsFee = 0;
+             if (numTableTents > 0) {
+                 tableTentsFee = (numTableTents >= 4 ? (4 * tableTentCost4) + ((numTableTents - 4) * tableTentCostAdd) : numTableTents * tableTentCost4);
+             }
+             const customerInitialSetupFee = mandatoryWhiteLabelCost + deepPOSFee + specialsSyncFee + additionalGamesFee + tableTentsFee;
+
+             // --- Monthly Expenses ---
+             const monthlyServiceSub = serviceSubscriptionCost;
+             const monthlyNormalTokenWholesaleCost = numNormalTokens * normalTokenWholesale;
+             const monthlyPremiumTokenWholesaleCost = numPremiumTokens * premiumTokenWholesale;
+             const customerTotalMonthlyTokenWholesaleCost = monthlyNormalTokenWholesaleCost + monthlyPremiumTokenWholesaleCost;
+             const customerTotalMonthlyExpenses = monthlyServiceSub + customerTotalMonthlyTokenWholesaleCost;
+
+             // --- Monthly Income ---
+             const monthlyNormalTokenRetailIncome = numNormalTokens * normalTokenRetail;
+             const monthlyPremiumTokenRetailIncome = numPremiumTokens * premiumTokenRetail;
+             const customerTotalMonthlyTokenIncome = monthlyNormalTokenRetailIncome + monthlyPremiumTokenRetailIncome;
+
+             // --- Covering Expenses & Games Controls ---
+             const customerTokenSalesProfit = customerTotalMonthlyTokenIncome - customerTotalMonthlyTokenWholesaleCost;
+             const prizePoolValue = customerTokenSalesProfit * payoutPercentage; // Prize pool from profit on tokens
+             const remainderProfit = customerTokenSalesProfit - prizePoolValue - monthlyServiceSub; // Profit after prizes AND service sub
+
+             const monthsToROI = customerRemainderProfit > 0 ? customerInitialSetupFee / customerRemainderProfit : 0;
+
+             // --- Update Customer's Display ---
+             setDisplay('mandatoryWhiteLabelCost', mandatoryWhiteLabelCost);
+             setDisplay('monthlyServiceSubDisplay', monthlyServiceSub);
+             setDisplay('customerInitialSetupFee', customerInitialSetupFee);
+             setDisplay('customerMonthlyTokenWholesaleCost', customerTotalMonthlyTokenWholesaleCost);
+             setDisplay('customerTotalMonthlyExpenses', customerTotalMonthlyExpenses);
+             setDisplay('customerTotalMonthlyTokenIncome', customerTotalMonthlyTokenIncome);
+             setDisplay('customerTokenSalesProfit', customerTokenSalesProfit);
+             setDisplay('customerPrizePoolValue', prizePoolValue);
+             setDisplay('customerRemainderProfit', remainderProfit);
+             setDisplay('monthsToROI', monthsToROI, false);
+
+             // --- Update Detailed Customer Results ---
+             setDisplay('resMandatoryWhiteLabel', mandatoryWhiteLabelCost);
+             setDisplay('resDeepPOS', deepPOSFee);
+             setDisplay('resSpecialsSync', specialsSyncFee);
+             setDisplay('resAdditionalGames', additionalGamesFee);
+             setDisplay('resTableTents', tableTentsFee);
+             setDisplay('resCustomerInitialSetupFee', customerInitialSetupFee);
+             setDisplay('resMonthlyServiceSub', monthlyServiceSub);
+             setDisplay('resNormalTokenWholesaleCost', monthlyNormalTokenWholesaleCost);
+             setDisplay('resPremiumTokenWholesaleCost', monthlyPremiumTokenWholesaleCost);
+             setDisplay('resCustomerTotalMonthlyExpenses', customerTotalMonthlyExpenses);
+             setDisplay('resNormalTokenRetailIncome', monthlyNormalTokenRetailIncome);
+             setDisplay('resPremiumTokenRetailIncome', monthlyPremiumTokenRetailIncome);
+             setDisplay('resCustomerTotalMonthlyTokenIncome', customerTotalMonthlyTokenIncome);
+             setDisplay('resCustomerTokenSalesProfit', customerTokenSalesProfit);
+             setDisplay('resCustomerPrizePoolValue', prizePoolValue);
+             setDisplay('resCustomerRemainderProfit', remainderProfit);
+             setDisplay('resMonthsToROI', monthsToROI, false);
+
+             // Store profit for business calculation
+             customerCalculatedProfit = remainderProfit;
+         }
+
+         function calculateMyBusiness() {
+             const numVenues = getVal('numVenues');
+             const serverCostMonthly = getVal('serverCostMonthly');
+             const myTableTentCost = getVal('myTableTentCost');
+
+             // --- Income ---
+             const myTotalMonthlyIncome = numVenues * customerCalculatedProfit; // My income is the customer's profit remainder
+
+             // --- Expenses ---
+             const myTotalMonthlyExpenses = serverCostMonthly;
+             // Calculate once-off table tent cost based on number of venues
+             const myTotalOnceOffExpenses = numVenues * myTableTentCost;
+
+             const myNetMonthlyProfit = myTotalMonthlyIncome - myTotalMonthlyExpenses;
+
+             // --- Update My Business Display ---
+             setDisplay('myTotalMonthlyIncome', myTotalMonthlyIncome);
+             setDisplay('myTotalMonthlyExpenses', myTotalMonthlyExpenses);
+             setDisplay('myNetMonthlyProfit', myNetMonthlyProfit);
+             setDisplay('myTotalOnceOffExpenses', myTotalOnceOffExpenses);
+
+             // --- Update Detailed My Business Results ---
+             setDisplay('resMyTotalMonthlyIncome', myTotalMonthlyIncome);
+             setDisplay('resMyTotalMonthlyExpenses', myTotalMonthlyExpenses);
+             setDisplay('resMyNetMonthlyProfit', myNetMonthlyProfit);
+             setDisplay('resMyTotalOnceOffExpenses', myTotalOnceOffExpenses);
+         }
+
+         function calculateAll() {
+             calculateCustomer();
+             calculateMyBusiness();
+         }
+     </script>
  </body>
  </html>
