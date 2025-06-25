@@ -223,8 +223,8 @@
                  <span id="customerMonthlyTokenWholesaleCost">R0.00</span>
              </div>
              <div class="sub-total">
-                 <span>Customer's Other Monthly Expenses:</span>
-                 <span id="customerOtherMonthlyExpenses">R0.00</span>
+                 <span>Customer's Monthly Service Subscription Cost:</span>
+                 <span id="customerServiceSubscriptionCost">R0.00</span>
              </div>
              <div class="sub-total">
                  <span>Customer's Total Monthly Expenses:</span>
@@ -236,7 +236,7 @@
              </div>
 
              <h3>Games Controls (Venue's Payout Strategy)</h3>
-             <label for="payoutPercentage">Target Payout Percentage (% of Token Retail Income):</label>
+             <label for="payoutPercentage">Target Payout Percentage (% of Net Token Profit):</label>
              <input type="number" id="payoutPercentage" value="75" min="0" max="100" oninput="calculateAll()">
 
              <label for="smallWinPercentage">% of Prize Pool for Small Wins:</label>
@@ -248,15 +248,15 @@
              <p style="font-size: 0.8em; color: #aaa;">*Ensure percentages sum to 100%.</p>
 
              <div class="sub-total">
-                 <span>Customer's Monthly Token Sales Profit (before Prizes):</span>
-                 <span id="customerTokenSalesProfit">R0.00</span>
+                 <span>Customer's Net Monthly Profit (Before Prizes):</span>
+                 <span id="customerNetProfitBeforePrizes">R0.00</span>
              </div>
              <div class="sub-total">
                  <span>Customer's Prize Pool Value:</span>
                  <span id="customerPrizePoolValue">R0.00</span>
              </div>
              <div class="sub-total">
-                 <span>Customer's Remainder (Profit After Prizes & Fixed Costs):</span>
+                 <span>Customer's Remainder (Final Monthly Profit):</span>
                  <span id="customerRemainderProfit">R0.00</span>
              </div>
 
@@ -286,15 +286,15 @@
          <p>Monthly Premium Token Retail Income: <span id="resPremiumTokenRetailIncome">R0.00</span></p>
          <p><b>Total Customer's Monthly Token Income:</b> <span id="resCustomerTotalMonthlyTokenIncome">R0.00</span></p>
          <hr>
-         <p>Customer's Monthly Token Sales Profit (Income - Token Wholesale Cost): <span id="resCustomerTokenSalesProfit">R0.00</span></p>
-         <p>Customer's Prize Pool Value (from Token Sales Profit * Payout %): <span id="resCustomerPrizePoolValue">R0.00</span></p>
-         <p>Customer's Profit Remainder (Token Sales Profit - Prize Pool - Service Sub): <span id="resCustomerRemainderProfit">R0.00</span></p>
+         <p>Customer's Net Monthly Profit (Before Prizes): <span id="resCustomerNetProfitBeforePrizes">R0.00</span></p>
+         <p>Customer's Prize Pool Value: <span id="resCustomerPrizePoolValue">R0.00</span></p>
+         <p>Customer's Remainder (Final Monthly Profit): <span id="resCustomerRemainderProfit">R0.00</span></p>
          <p>Months to ROI: <span id="resMonthsToROI">0 Months</span></p>
      </div>
 
      <div id="my-results">
          <h2>My (Business) Projected Summary</h2>
-         <p>My Total Monthly Income from Customer Remainders (per venue): <span id="resMyIncomePerVenue">R0.00</span></p>
+         <p>My Monthly Income per Venue (Customer's Remainder): <span id="resMyIncomePerVenue">R0.00</span></p>
          <p>My Total Monthly Income from all Venues: <span id="resMyTotalMonthlyIncome">R0.00</span></p>
          <p>My Total Monthly Expenses (Server Cost): <span id="resMyTotalMonthlyExpenses">R0.00</span></p>
          <p><b>My Net Monthly Profit (from all venues):</b> <span id="resMyNetMonthlyProfit">R0.00</span></p>
@@ -312,9 +312,15 @@
          function setDisplay(id, value, isCurrency = true) {
              const element = document.getElementById(id);
              if (element) {
-                 element.textContent = isCurrency ? `R${value.toFixed(2)}` : (value.toFixed(2));
-                 if (!isCurrency) { // For ROI, show 'Months' if not NaN/Infinity
-                    element.textContent = isFinite(value) && value > 0 ? `${value.toFixed(1)} Months` : 'N/A';
+                 if (isCurrency) {
+                     element.textContent = `R${value.toFixed(2)}`;
+                 } else {
+                     // For ROI, handle NaN/Infinity
+                     if (!isFinite(value) || value <= 0) {
+                         element.textContent = 'N/A';
+                     } else {
+                         element.textContent = `${value.toFixed(1)} Months`;
+                     }
                  }
              }
          }
@@ -326,7 +332,8 @@
 
              let total = small + medium + jackpot;
              if (total > 100) {
-                 // Optionally, alert or auto-adjust. For now, just allow user to see the sum > 100
+                 // Simple alert if sum exceeds 100%
+                 // For more robust UX, you might auto-adjust or visually indicate an error
                  // console.warn("Prize pool percentages exceed 100%. Please adjust.");
              }
          }
@@ -359,7 +366,7 @@
              const numAdditionalGames = getVal('numAdditionalGames');
              const numTableTents = getVal('numTableTents');
              const numNormalTokens = getVal('numNormalTokens');
-             const numPremiumTokens = getVal('numPremiumTokens');
+             const numPremiumTokens = getNumPremiumTokens(); // Use function to get token count
              const payoutPercentage = getVal('payoutPercentage') / 100;
 
              // --- Initial Set-Up Fee (Customer's Perspective) ---
@@ -379,38 +386,35 @@
              const monthlyPremiumTokenWholesaleCost = numPremiumTokens * premiumTokenWholesale;
              const customerMonthlyTokenWholesaleCost = monthlyNormalTokenWholesaleCost + monthlyPremiumTokenWholesaleCost;
 
-             const customerOtherMonthlyExpenses = monthlyServiceSub; // Currently only service subscription
-             const customerTotalMonthlyExpenses = customerMonthlyTokenWholesaleCost + customerOtherMonthlyExpenses;
+             const customerTotalMonthlyExpenses = customerMonthlyTokenWholesaleCost + monthlyServiceSub; // Wholesale Tokens + Service Subscription
 
              const monthlyNormalTokenRetailIncome = numNormalTokens * normalTokenRetail;
              const monthlyPremiumTokenRetailIncome = numPremiumTokens * premiumTokenRetail;
              const customerTotalMonthlyTokenIncome = monthlyNormalTokenRetailIncome + monthlyPremiumTokenRetailIncome;
 
              // --- Covering Expenses & Games Controls (Customer's Profit Calculations) ---
-             // Profit from selling tokens *after* buying them wholesale
-             const customerTokenSalesProfit = customerTotalMonthlyTokenIncome - customerMonthlyTokenWholesaleCost;
+             // Customer's Net Monthly Profit *Before Prizes*: This is (Retail Income - Wholesale Token Cost - Service Subscription)
+             const customerNetProfitBeforePrizes = customerTotalMonthlyTokenIncome - customerMonthlyTokenWholesaleCost - monthlyServiceSub;
 
-             // Prize pool is a percentage of the *retail income* of tokens sold
-             const prizePoolValue = customerTotalMonthlyTokenIncome * payoutPercentage;
+             // Prize Pool Value: Percentage of the 'Net Monthly Profit (Before Prizes)'
+             const prizePoolValue = customerNetProfitBeforePrizes * payoutPercentage;
 
-             // Remainder: What the venue keeps after token wholesale costs, prizes, AND fixed monthly subscription
-             // Your earlier model had Prize Pool from token sales profit - this is typically from total retail income
-             // Corrected logic: Venue's profit is Retail Income - Wholesale Cost - Prize Pool - Service Subscription
-             const customerRemainderProfit = customerTotalMonthlyTokenIncome - customerMonthlyTokenWholesaleCost - prizePoolValue - monthlyServiceSub;
+             // Customer's Remainder (Final Monthly Profit): Net Profit Before Prizes - Prize Pool
+             const customerRemainderProfit = customerNetProfitBeforePrizes - prizePoolValue;
 
              // --- Months to ROI Calculation (Customer's Perspective) ---
              // ROI = Initial Investment / Monthly Net Profit (Remainder)
-             const monthsToROI = customerRemainderProfit > 0 ? customerInitialSetupFee / customerRemainderProfit : 0;
+             const monthsToROI = customerRemainderProfit > 0 ? customerInitialSetupFee / customerRemainderProfit : NaN; // Use NaN for non-positive profit
 
              // --- Update Customer's Display ---
              setDisplay('mandatoryWhiteLabelCost', mandatoryWhiteLabelCost);
              setDisplay('monthlyServiceSubDisplay', monthlyServiceSub);
              setDisplay('customerInitialSetupFee', customerInitialSetupFee);
              setDisplay('customerMonthlyTokenWholesaleCost', customerMonthlyTokenWholesaleCost);
-             setDisplay('customerOtherMonthlyExpenses', customerOtherMonthlyExpenses); // Display other expenses separately
+             setDisplay('customerServiceSubscriptionCost', monthlyServiceSub); // Display service sub separately
              setDisplay('customerTotalMonthlyExpenses', customerTotalMonthlyExpenses);
              setDisplay('customerTotalMonthlyTokenIncome', customerTotalMonthlyTokenIncome);
-             setDisplay('customerTokenSalesProfit', customerTokenSalesProfit);
+             setDisplay('customerNetProfitBeforePrizes', customerNetProfitBeforePrizes);
              setDisplay('customerPrizePoolValue', prizePoolValue);
              setDisplay('customerRemainderProfit', customerRemainderProfit);
              setDisplay('monthsToROI', monthsToROI, false);
@@ -429,7 +433,7 @@
              setDisplay('resNormalTokenRetailIncome', monthlyNormalTokenRetailIncome);
              setDisplay('resPremiumTokenRetailIncome', monthlyPremiumTokenRetailIncome);
              setDisplay('resCustomerTotalMonthlyTokenIncome', customerTotalMonthlyTokenIncome);
-             setDisplay('resCustomerTokenSalesProfit', customerTokenSalesProfit);
+             setDisplay('resCustomerNetProfitBeforePrizes', customerNetProfitBeforePrizes);
              setDisplay('resCustomerPrizePoolValue', prizePoolValue);
              setDisplay('resCustomerRemainderProfit', customerRemainderProfit);
              setDisplay('resMonthsToROI', monthsToROI, false);
@@ -449,9 +453,7 @@
 
              // --- Expenses ---
              const myTotalMonthlyExpenses = serverCostMonthly;
-             // Calculate once-off table tent cost based on number of venues that chose tents
-             // Note: This needs to be refined if not all venues choose tents.
-             // For simplicity, we assume `numVenues` means number of venues *you* supply table tents to.
+             // Assuming myTableTentCost is a once-off per venue
              const myTotalOnceOffExpenses = numVenues * myTableTentCost;
 
              const myNetMonthlyProfit = myTotalMonthlyIncome - myTotalMonthlyExpenses;
