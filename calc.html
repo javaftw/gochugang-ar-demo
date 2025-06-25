@@ -299,8 +299,10 @@
 
      <div id="my-results">
          <h2>My (Business) Projected Summary</h2>
-         <p>My Monthly Income per Venue (Wholesale + Subscription): <span id="resMyIncomePerVenue">R0.00</span></p>
+         <p>My Monthly Income per Venue (Wholesale Tokens): <span id="resMyWholesaleIncomePerVenue">R0.00</span></p>
+         <p>My Monthly Income per Venue (Subscription): <span id="resMySubscriptionIncomePerVenue">R0.00</span></p>
          <p>My Once-Off Income per Venue (Initial Setup): <span id="resMyOnceOffIncomePerVenue">R0.00</span></p>
+         <hr>
          <p>My Total Monthly Income from all Venues: <span id="resMyTotalMonthlyIncome">R0.00</span></p>
          <p>My Total Monthly Expenses (Server Cost): <span id="resMyTotalMonthlyExpenses">R0.00</span></p>
          <p><b>My Net Monthly Profit (from all venues):</b> <span id="resMyNetMonthlyProfit">R0.00</span></p>
@@ -345,14 +347,13 @@
              }
          }
 
-         // Global variables to store income components from a single customer's perspective, for 'My' business calculation
+         // Global variables to store income components from a single customer's perspective, FOR 'My' business calculation
          let myMonthlyIncomePerVenueFromWholesaleTokens = 0;
          let myMonthlyIncomePerVenueFromSubscription = 0;
          let myOnceOffIncomePerVenueFromSetup = 0;
 
          // This variable stores the customer's *net profit* after all their expenses and prizes.
-         // This is useful for displaying "My Monthly Income per Venue (Customer's Remainder)" in the detailed results,
-         // but is NOT used for calculating my business's primary income.
+         // This is solely for informational display in "My" results (e.g., "My Monthly Income per Venue (Customer's Remainder)")
          let customerCalculatedProfitRemainder = 0;
 
          function calculateCustomer() {
@@ -384,7 +385,7 @@
              const numPremiumTokens = getVal('numPremiumTokens');
              const payoutPercentage = getVal('payoutPercentage') / 100;
 
-             // --- Initial Set-Up Fee (Customer's Perspective - This is *My* Once-Off Income per venue) ---
+             // --- Initial Set-Up Fee (Customer's Perspective) ---
              const mandatoryWhiteLabelCost = minWhiteLabelGames * costPerWhiteLabelGame;
              const deepPOSFee = deepPOSChosen * deepPOSCost;
              const specialsSyncFee = numSpecialsSync * specialSyncCost;
@@ -394,7 +395,7 @@
                  tableTentsFee = (numTableTents >= 4 ? (4 * tableTentCost4) + Math.max(0, (numTableTents - 4)) * tableTentCostAdd : numTableTents * tableTentCost4);
              }
              const customerInitialSetupFee = mandatoryWhiteLabelCost + deepPOSFee + specialsSyncFee + additionalGamesFee + tableTentsFee;
-             myOnceOffIncomePerVenueFromSetup = customerInitialSetupFee; // Store for 'My' business
+             myOnceOffIncomePerVenueFromSetup = customerInitialSetupFee; // Store for 'My' business's Once-Off Income
 
              // --- Monthly Operational Costs & Income (Customer's Perspective) ---
              const monthlyServiceSub = serviceSubscriptionCost;
@@ -402,8 +403,9 @@
              const monthlyPremiumTokenWholesaleCost = numPremiumTokens * premiumTokenWholesale;
              const customerMonthlyTokenWholesaleCost = monthlyNormalTokenWholesaleCost + monthlyPremiumTokenWholesaleCost;
 
-             myMonthlyIncomePerVenueFromWholesaleTokens = customerMonthlyTokenWholesaleCost; // Store for 'My' business
-             myMonthlyIncomePerVenueFromSubscription = monthlyServiceSub; // Store for 'My' business
+             // Store 'My' Monthly Income components from this customer
+             myMonthlyIncomePerVenueFromWholesaleTokens = customerMonthlyTokenWholesaleCost;
+             myMonthlyIncomePerVenueFromSubscription = monthlyServiceSub;
 
              const customerTotalMonthlyExpenses = customerMonthlyTokenWholesaleCost + monthlyServiceSub; // Wholesale Tokens + Service Subscription
 
@@ -467,15 +469,15 @@
              const myTableTentCost = getVal('myTableTentCost');
 
              // --- My Income ---
-             // My monthly income comes from wholesale ticket sales AND monthly subscription fees
+             // My monthly income comes from wholesale ticket sales AND monthly subscription fees from each venue
              const myTotalMonthlyIncome = numVenues * (myMonthlyIncomePerVenueFromWholesaleTokens + myMonthlyIncomePerVenueFromSubscription);
 
              // My once-off income comes from initial setup fees per venue
              const myTotalOnceOffIncome = numVenues * myOnceOffIncomePerVenueFromSetup;
 
              // --- My Expenses ---
-             const myTotalMonthlyExpenses = serverCostMonthly; // One server at 650/m
-             const myTotalOnceOffExpenses = numVenues * myTableTentCost; // My cost for the tents per venue
+             const myTotalMonthlyExpenses = serverCostMonthly; // My single server cost per month
+             const myTotalOnceOffExpenses = numVenues * myTableTentCost; // My cost for providing tents per venue
 
              const myNetMonthlyProfit = myTotalMonthlyIncome - myTotalMonthlyExpenses; // This is my NET monthly profit
 
@@ -487,9 +489,10 @@
              setDisplay('myTotalOnceOffExpenses', myTotalOnceOffExpenses);
 
              // --- Update Detailed My Business Results ---
-             // Display the customer's final remainder here for informational purposes, not as part of MY income calculation
-             setDisplay('resMyIncomePerVenue', customerCalculatedProfitRemainder);
-             setDisplay('resMyOnceOffIncomePerVenue', myOnceOffIncomePerVenueFromSetup); // NEW: Display my once-off income per venue
+             // These are for informational clarity in the detailed results section
+             setDisplay('resMyWholesaleIncomePerVenue', myMonthlyIncomePerVenueFromWholesaleTokens); // NEW
+             setDisplay('resMySubscriptionIncomePerVenue', myMonthlyIncomePerVenueFromSubscription); // NEW
+             setDisplay('resMyOnceOffIncomePerVenue', myOnceOffIncomePerVenueFromSetup); // NEW
              setDisplay('resMyTotalMonthlyIncome', myTotalMonthlyIncome);
              setDisplay('resMyTotalMonthlyExpenses', myTotalMonthlyExpenses);
              setDisplay('resMyNetMonthlyProfit', myNetMonthlyProfit);
@@ -498,13 +501,8 @@
          }
 
          function calculateAll() {
-             // Ensure 'My' business variables are in place for customer calculations
-             // calculateCustomer relies on wholesale values being set by 'My' section
-             // so it's a bit circular. The event listeners on 'My' inputs will call calculateAll()
-             // which then calls calculateCustomer(), so the flow should be fine.
-
-             calculateCustomer();
-             calculateMyBusiness();
+             calculateCustomer(); // Calculate customer's financials and set 'My' income components
+             calculateMyBusiness(); // Use those components to calculate 'My' financials
          }
      </script>
  </body>
