@@ -224,6 +224,17 @@
              <input type="number" id="numPremiumTokens" value="150" min="0" oninput="calculateAll()">
 
              <div class="sub-total">
+                 <span>Total Number of Tokens:</span>
+                 <span id="totalNumberOfTokens">0</span>
+             </div>
+             <label for="numBusinessDays">Number of Business Days / Month:</label>
+             <input type="number" id="numBusinessDays" value="22" min="1" oninput="calculateAll()">
+             <div class="sub-total">
+                 <span>Required Daily Token Sales:</span>
+                 <span id="requiredDailyTokenSales">0</span>
+             </div>
+
+             <div class="sub-total">
                  <span>Customer's Total Monthly Token Wholesale Cost:</span>
                  <span id="customerMonthlyTokenWholesaleCost">R0.00</span>
              </div>
@@ -291,6 +302,10 @@
          <p>Monthly Premium Token Retail Income: <span id="resPremiumTokenRetailIncome">R0.00</span></p>
          <p><b>Total Customer's Monthly Token Income:</b> <span id="resCustomerTotalMonthlyTokenIncome">R0.00</span></p>
          <hr>
+         <p>Total Number of Tokens: <span id="resTotalNumberOfTokens">0</span></p>
+         <p>Number of Business Days / Month: <span id="resNumBusinessDays">0</span></p>
+         <p>Required Daily Token Sales: <span id="resRequiredDailyTokenSales">0</span></p>
+         <hr>
          <p>Customer's Net Monthly Profit (Before Prizes): <span id="resCustomerNetProfitBeforePrizes">R0.00</span></p>
          <p>Customer's Prize Pool Value: <span id="resCustomerPrizePoolValue">R0.00</span></p>
          <p>Customer's Remainder (Final Monthly Profit): <span id="resCustomerRemainderProfit">R0.00</span></p>
@@ -318,12 +333,15 @@
              return parseFloat(document.getElementById(id).value) || 0;
          }
 
-         function setDisplay(id, value, isCurrency = true) {
+         function setDisplay(id, value, isCurrency = true, isInteger = false) {
              const element = document.getElementById(id);
              if (element) {
                  if (isCurrency) {
                      element.textContent = `R${value.toFixed(2)}`;
-                 } else {
+                 } else if (isInteger) {
+                     element.textContent = value.toFixed(0); // Display as integer
+                 }
+                 else {
                      // For ROI, handle NaN/Infinity
                      if (!isFinite(value) || value <= 0) {
                          element.textContent = 'N/A';
@@ -383,6 +401,7 @@
              const numTableTents = getVal('numTableTents');
              const numNormalTokens = getVal('numNormalTokens');
              const numPremiumTokens = getVal('numPremiumTokens');
+             const numBusinessDays = getVal('numBusinessDays'); // New: Get number of business days
              const payoutPercentage = getVal('payoutPercentage') / 100;
 
              // --- Initial Set-Up Fee (Customer's Perspective) ---
@@ -403,7 +422,6 @@
              const monthlyPremiumTokenWholesaleCost = numPremiumTokens * premiumTokenWholesale;
              const customerMonthlyTokenWholesaleCost = monthlyNormalTokenWholesaleCost + monthlyPremiumTokenWholesaleCost;
 
-             // Store 'My' Monthly Income components from this customer
              myMonthlyIncomePerVenueFromWholesaleTokens = customerMonthlyTokenWholesaleCost;
              myMonthlyIncomePerVenueFromSubscription = monthlyServiceSub;
 
@@ -412,6 +430,10 @@
              const monthlyNormalTokenRetailIncome = numNormalTokens * normalTokenRetail;
              const monthlyPremiumTokenRetailIncome = numPremiumTokens * premiumTokenRetail;
              const customerTotalMonthlyTokenIncome = monthlyNormalTokenRetailIncome + monthlyPremiumTokenRetailIncome;
+
+             // New calculations for token sales
+             const totalNumberOfTokens = numNormalTokens + numPremiumTokens;
+             const requiredDailyTokenSales = numBusinessDays > 0 ? totalNumberOfTokens / numBusinessDays : 0;
 
              // --- Covering Expenses & Games Controls (Customer's Profit Calculations) ---
              // Customer's Net Monthly Profit *Before Prizes*: This is (Retail Income - Wholesale Token Cost - Service Subscription)
@@ -435,6 +457,12 @@
              setDisplay('customerServiceSubscriptionCost', monthlyServiceSub); // Display service sub separately
              setDisplay('customerTotalMonthlyExpenses', customerTotalMonthlyExpenses);
              setDisplay('customerTotalMonthlyTokenIncome', customerTotalMonthlyTokenIncome);
+
+             // New token sales display
+             setDisplay('totalNumberOfTokens', totalNumberOfTokens, false, true); // Not currency, is integer
+             // numBusinessDays is already an input, no need to setDisplay
+             setDisplay('requiredDailyTokenSales', requiredDailyTokenSales, false, false); // Not currency, might not be integer
+
              setDisplay('customerNetProfitBeforePrizes', customerNetProfitBeforePrizes);
              setDisplay('customerPrizePoolValue', prizePoolValue);
              setDisplay('customerRemainderProfit', customerRemainderProfit);
@@ -454,6 +482,12 @@
              setDisplay('resNormalTokenRetailIncome', monthlyNormalTokenRetailIncome);
              setDisplay('resPremiumTokenRetailIncome', monthlyPremiumTokenRetailIncome);
              setDisplay('resCustomerTotalMonthlyTokenIncome', customerTotalMonthlyTokenIncome);
+
+             // New detailed token sales display
+             setDisplay('resTotalNumberOfTokens', totalNumberOfTokens, false, true);
+             setDisplay('resNumBusinessDays', numBusinessDays, false, true);
+             setDisplay('resRequiredDailyTokenSales', requiredDailyTokenSales, false, false);
+
              setDisplay('resCustomerNetProfitBeforePrizes', customerNetProfitBeforePrizes);
              setDisplay('resCustomerPrizePoolValue', prizePoolValue);
              setDisplay('resCustomerRemainderProfit', customerRemainderProfit);
