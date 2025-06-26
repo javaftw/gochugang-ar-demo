@@ -1,0 +1,157 @@
+/* Basic Reset and Mobile Setup */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: white;
+    overflow-x: hidden;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+/* Dealer Section */
+.dealer-section {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.dealer-section h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    opacity: 0.9;
+}
+
+/* Other Players Section */
+.other-players-section {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.other-players {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+}
+
+.player {
+    text-align: center;
+    flex: 1;
+}
+
+.player-name {
+    font-size: 14px;
+    opacity: 0.8;
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Main Player Section */
+.main-player-section {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    text-align: center;
+    flex-grow: 1;
+}
+
+.main-player-section h3 {
+    font-size: 20px;
+    margin-bottom: 15px;
+}
+
+/* Action Buttons */
+.actions-section {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 18px;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.hit-btn {
+    background: #ff6b6b;
+    color: white;
+}
+
+.hit-btn:hover, .hit-btn:active {
+    background: #ff5252;
+    transform: scale(0.98);
+}
+
+.stand-btn {
+    background: #4ecdc4;
+    color: white;
+}
+
+.stand-btn:hover, .stand-btn:active {
+    background: #26a69a;
+    transform: scale(0.98);
+}
+
+/* Status Section */
+.status-section {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+}
+
+/* Placeholder styles for card areas */
+.dealer-cards,
+.player-cards,
+.main-player-cards {
+    min-height: 60px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+}
+
+.main-player-cards {
+    min-height: 80px;
+}
+
+/* Responsive adjustments */
+@media (max-height: 600px) {
+    .game-container {
+        padding: 5px;
+    }
+
+    .main-player-section {
+        padding: 15px;
+    }
+}
