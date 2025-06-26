@@ -127,7 +127,7 @@ body {
     font-size: 16px;
 }
 
-/* Placeholder styles for card areas */
+/* Card Areas */
 .dealer-cards,
 .player-cards,
 .main-player-cards {
@@ -138,11 +138,86 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px dashed rgba(255, 255, 255, 0.3);
+    gap: 8px;
+    padding: 8px;
+    flex-wrap: wrap;
 }
 
 .main-player-cards {
-    min-height: 80px;
+    min-height: 90px;
+    gap: 12px;
+    padding: 12px;
+}
+
+/* Individual Cards */
+.card {
+    width: 45px;
+    height: 63px; /* 45 * 1.4 = 63 */
+    border-radius: 6px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.card svg {
+    width: 100%;
+    height: 100%;
+    border-radius: 6px;
+}
+
+/* Main player cards are larger */
+.main-player-cards .card {
+    width: 55px;
+    height: 77px; /* 55 * 1.4 = 77 */
+}
+
+/* Other players have smaller cards */
+.player-cards .card {
+    width: 35px;
+    height: 49px; /* 35 * 1.4 = 49 */
+}
+
+/* Card totals */
+.card-total {
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 8px;
+    padding: 4px 12px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    display: inline-block;
+}
+
+.main-player-total .card-total {
+    font-size: 18px;
+}
+
+/* Empty state styling */
+.cards-empty {
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+}
+
+/* Animation for new cards */
+@keyframes cardDeal {
+    from {
+        transform: translateY(-20px) scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.card.dealing {
+    animation: cardDeal 0.3s ease-out;
 }
 
 /* Responsive adjustments */
