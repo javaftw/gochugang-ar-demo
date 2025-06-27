@@ -216,6 +216,25 @@ function setupBackendEvents() {
         updateUI();
     });
 
+    backend.on('gamePhase', (data) => {
+        console.log('Phase change:', data);
+        gameState.currentPhase = data.phase;
+        gameState.isMyTurn = data.activePlayer === 1;
+
+        // Clear cards when starting a new round
+        if (data.phase === 'next-round') {
+            clearAllHands();
+            gameState.currentRound = data.round;
+            updateUI();
+        }
+
+        updateButtonStates();
+
+        if (data.message) {
+            showMessage(data.message);
+        }
+    });
+
     backend.on('gameEnd', (data) => {
         console.log('Game end:', data);
         let message = 'Game Over! ';
