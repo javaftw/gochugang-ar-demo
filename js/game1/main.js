@@ -1,4 +1,4 @@
-// Game State
+// Game State (now managed by backend)
 let gameState = {
     currentRound: 1,
     totalRounds: 3,
@@ -8,8 +8,13 @@ let gameState = {
     otherPlayers: [
         { name: 'Player 2', cards: [], status: 'waiting' },
         { name: 'Player 3', cards: [], status: 'waiting' }
-    ]
+    ],
+    currentPhase: 'waiting',
+    isMyTurn: false
 };
+
+// Backend instance
+let backend;
 
 // DOM Elements
 const hitBtn = document.getElementById('hit-btn');
@@ -23,7 +28,7 @@ function createCardElement(value, faceUp = true) {
     cardEl.className = 'card dealing';
 
     const svgEl = document.createElement('img');
-    if (faceUp) {
+    if (faceUp && value) {
         svgEl.src = `../assets/svg/game1/cards/${value}f.svg`;
         svgEl.alt = `Card ${value}`;
     } else {
@@ -35,33 +40,45 @@ function createCardElement(value, faceUp = true) {
     return cardEl;
 }
 
-function addCardToPlayer(playerType, value, faceUp = true) {
-    let cardsContainer;
-    let totalContainer;
-
-    // Determine which container to use
+function getCardContainer(playerType) {
     switch(playerType) {
         case 'dealer':
-            cardsContainer = document.querySelector('.dealer-cards');
-            totalContainer = document.querySelector('.dealer-total');
-            gameState.dealerCards.push(value);
-            break;
+            return document.querySelector('.dealer-cards');
+        case 1:
         case 'player':
-            cardsContainer = document.querySelector('.main-player-cards');
-            totalContainer = document.querySelector('.main-player-total');
-            gameState.playerCards.push(value);
-            break;
+            return document.querySelector('.main-player-cards');
+        case 2:
         case 'player2':
-            cardsContainer = document.querySelector('.player-2 .player-cards');
-            totalContainer = document.querySelector('.player-2 .player-status');
-            gameState.otherPlayers[0].cards.push(value);
-            break;
+            return document.querySelector('.player-2 .player-cards');
+        case 3:
         case 'player3':
-            cardsContainer = document.querySelector('.player-3 .player-cards');
-            totalContainer = document.querySelector('.player-3 .player-status');
-            gameState.otherPlayers[1].cards.push(value);
-            break;
+            return document.querySelector('.player-3 .player-cards');
+        default:
+            return null;
     }
+}
+
+function getTotalContainer(playerType) {
+    switch(playerType) {
+        case 'dealer':
+            return document.querySelector('.dealer-total');
+        case 1:
+        case 'player':
+            return document.querySelector('.main-player-total');
+        case 2:
+        case 'player2':
+            return document.querySelector('.player-2 .player-status');
+        case 3:
+        case 'player3':
+            return document.querySelector('.player-3 .player-status');
+        default:
+            return null;
+    }
+}
+
+function addCardToUI(playerType, value, faceUp = true) {
+    const cardsContainer = getCardContainer(playerType);
+    if (!cardsContainer) return;
 
     // Clear empty state styling
     cardsContainer.classList.remove('cards-empty');
@@ -69,45 +86,16 @@ function addCardToPlayer(playerType, value, faceUp = true) {
     // Create and add card
     const cardEl = createCardElement(value, faceUp);
     cardsContainer.appendChild(cardEl);
-
-    // Update total if face up
-    if (faceUp) {
-        updatePlayerTotal(playerType);
-    }
 }
 
-function updatePlayerTotal(playerType) {
-    let cards, totalContainer;
+function updatePlayerTotalUI(playerType, total) {
+    const totalContainer = getTotalContainer(playerType);
+    if (!totalContainer) return;
 
-    switch(playerType) {
-        case 'dealer':
-            cards = gameState.dealerCards;
-            totalContainer = document.querySelector('.dealer-total');
-            break;
-        case 'player':
-            cards = gameState.playerCards;
-            totalContainer = document.querySelector('.main-player-total');
-            break;
-        case 'player2':
-            cards = gameState.otherPlayers[0].cards;
-            totalContainer = document.querySelector('.player-2 .player-status');
-            break;
-        case 'player3':
-            cards = gameState.otherPlayers[1].cards;
-            totalContainer = document.querySelector('.player-3 .player-status');
-            break;
-    }
-
-    const total = calculateHandTotal(cards);
     totalContainer.innerHTML = `<span class="card-total">${total}</span>`;
 }
 
 function clearAllHands() {
-    // Clear game state
-    gameState.dealerCards = [];
-    gameState.playerCards = [];
-    gameState.otherPlayers.forEach(player => player.cards = []);
-
     // Clear DOM
     document.querySelectorAll('.dealer-cards, .main-player-cards, .player-cards').forEach(container => {
         container.innerHTML = '';
@@ -120,34 +108,162 @@ function clearAllHands() {
     });
 }
 
+function updateButtonStates() {
+    const canAct = gameState.isMyTurn && gameState.currentPhase === 'player-turns';
+    hitBtn.disabled = !canAct;
+    standBtn.disabled = !canAct;
+
+    // Visual feedback
+    if (canAct) {
+        hitBtn.style.opacity = '1';
+        standBtn.style.opacity = '1';
+    } else {
+        hitBtn.style.opacity = '0.5';
+        standBtn.style.opacity = '0.5';
+    }
+}
+
+function showMessage(message, duration = 3000) {
+    // Simple message display - could be enhanced with better UI
+    console.log(`📢 ${message}`);
+
+    // Update dealer section temporarily with message
+    const dealerSection = document.querySelector('.dealer-section h3');
+    const originalText = dealerSection.textContent;
+    dealerSection.textContent = message;
+
+    setTimeout(() => {
+        dealerSection.textContent = originalText;
+    }, duration);
+}
+
+// Backend Event Handlers
+function setupBackendEvents() {
+    backend.on('gamePhase', (data) => {
+        console.log('Phase change:', data);
+        gameState.currentPhase = data.phase;
+        gameState.isMyTurn = data.activePlayer === 1;
+
+        updateButtonStates();
+
+        if (data.message) {
+            showMessage(data.message);
+        }
+    });
+
+    backend.on('cardDealt', (data) => {
+        console.log('Card dealt:', data);
+        addCardToUI(data.player, data.card, data.faceUp);
+
+        // Update totals if card is face up
+        if (data.faceUp && data.card) {
+            const player = backend.gameState.players[data.player];
+            if (player) {
+                updatePlayerTotalUI(data.player, player.total);
+            }
+        }
+    });
+
+    backend.on('playerAction', (data) => {
+        console.log('Player action:', data);
+        const playerName = data.player === 1 ? 'You' : `Player ${data.player}`;
+
+        if (data.action === 'bust') {
+            showMessage(`${playerName} busted with ${data.total}!`, 2000);
+        } else if (data.action === 'stand') {
+            showMessage(`${playerName} stands with ${data.total}`, 1500);
+        }
+
+        updatePlayerTotalUI(data.player, data.total);
+    });
+
+    backend.on('dealerReveal', (data) => {
+        console.log('Dealer reveals:', data);
+        showMessage(`Dealer reveals ${data.holeCard}`, 2000);
+
+        // Add the hole card to UI
+        addCardToUI('dealer', data.holeCard, true);
+        updatePlayerTotalUI('dealer', data.total);
+    });
+
+    backend.on('roundEnd', (data) => {
+        console.log('Round end:', data);
+        gameState.currentRound = data.round;
+
+        // Update player score if they won
+        if (data.results[1] === 'win') {
+            gameState.playerScore++;
+        }
+
+        // Show round results
+        let message = `Round ${data.round} complete! `;
+        switch (data.results[1]) {
+            case 'win':
+                message += 'You win! 🎉';
+                break;
+            case 'lose':
+                message += 'You lose 😔';
+                break;
+            case 'tie':
+                message += 'Tie game!';
+                break;
+            case 'bust':
+                message += 'You busted!';
+                break;
+        }
+
+        showMessage(message, 4000);
+        updateUI();
+    });
+
+    backend.on('gameEnd', (data) => {
+        console.log('Game end:', data);
+        let message = 'Game Over! ';
+
+        if (data.winner === 1) {
+            message += 'You are the champion! 🏆';
+        } else if (data.winner === 'tie') {
+            message += 'It\'s a tie!';
+        } else {
+            message += `Player ${data.winner} wins!`;
+        }
+
+        showMessage(message, 5000);
+
+        // Enable restart after delay
+        setTimeout(() => {
+            showMessage('Tap HIT to start new game', 0);
+            hitBtn.disabled = false;
+            hitBtn.style.opacity = '1';
+            hitBtn.textContent = 'NEW GAME';
+        }, 5000);
+    });
+}
+
 // Initialize Game
 function initGame() {
-    console.log('Gyutto Blackjack Demo - Initializing...');
+    console.log('🎮 Gyutto Blackjack Demo - Initializing...');
+
+    // Create backend instance
+    backend = new FakeBackend();
+    setupBackendEvents();
+
     updateUI();
     addEventListeners();
 
-    // Demo: Deal initial cards
+    // Auto-start first game after brief delay
     setTimeout(() => {
-        dealInitialCards();
-    }, 500);
+        startNewGame();
+    }, 1000);
 }
 
-function dealInitialCards() {
-    console.log('Dealing initial cards...');
-
-    // Clear any existing cards
+function startNewGame() {
+    console.log('Starting new game...');
     clearAllHands();
-
-    // Deal 2 cards to each player
-    setTimeout(() => addCardToPlayer('player', getRandomCard()), 100);
-    setTimeout(() => addCardToPlayer('player2', getRandomCard()), 200);
-    setTimeout(() => addCardToPlayer('player3', getRandomCard()), 300);
-    setTimeout(() => addCardToPlayer('dealer', getRandomCard()), 400);
-
-    setTimeout(() => addCardToPlayer('player', getRandomCard()), 600);
-    setTimeout(() => addCardToPlayer('player2', getRandomCard()), 700);
-    setTimeout(() => addCardToPlayer('player3', getRandomCard()), 800);
-    setTimeout(() => addCardToPlayer('dealer', getRandomCard(), false), 900); // Face down
+    gameState.currentRound = 1;
+    gameState.playerScore = 0;
+    updateUI();
+    backend.startGame();
 }
 
 // Add Event Listeners
@@ -157,38 +273,37 @@ function addEventListeners() {
 }
 
 // Button Handlers
-function handleHit() {
-    console.log('Hit button clicked');
-    const newCard = getRandomCard();
-    addCardToPlayer('player', newCard);
-
-    // Check for bust
-    const total = calculateHandTotal(gameState.playerCards);
-    if (total > 15) {
-        console.log('Player busts!');
-        // TODO: Handle bust logic
+async function handleHit() {
+    if (hitBtn.textContent === 'NEW GAME') {
+        startNewGame();
+        hitBtn.textContent = 'HIT';
+        return;
     }
+
+    if (!gameState.isMyTurn || gameState.currentPhase !== 'player-turns') {
+        console.log('Not your turn!');
+        return;
+    }
+
+    console.log('Player hits');
+    await backend.processPlayerAction(1, 'hit');
 }
 
-function handleStand() {
-    console.log('Stand button clicked');
-    // TODO: End player turn, start dealer turn
+async function handleStand() {
+    if (!gameState.isMyTurn || gameState.currentPhase !== 'player-turns') {
+        console.log('Not your turn!');
+        return;
+    }
+
+    console.log('Player stands');
+    await backend.processPlayerAction(1, 'stand');
 }
 
 // Update UI Elements
 function updateUI() {
     currentRoundEl.textContent = `Round ${gameState.currentRound}`;
     playerScoreEl.textContent = gameState.playerScore;
-}
-
-// Generate Random Card Value (1-6)
-function getRandomCard() {
-    return Math.floor(Math.random() * 6) + 1;
-}
-
-// Calculate Hand Total
-function calculateHandTotal(cards) {
-    return cards.reduce((total, card) => total + card, 0);
+    updateButtonStates();
 }
 
 // Start the game when page loads

@@ -116,6 +116,28 @@ body {
     transform: scale(0.98);
 }
 
+/* Disabled button states */
+.action-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+}
+
+.action-btn:disabled:hover,
+.action-btn:disabled:active {
+    transform: none;
+}
+
+.hit-btn:disabled:hover,
+.hit-btn:disabled:active {
+    background: #ff6b6b; /* Maintain original color */
+}
+
+.stand-btn:disabled:hover,
+.stand-btn:disabled:active {
+    background: #4ecdc4; /* Maintain original color */
+}
+
 /* Status Section */
 .status-section {
     background: rgba(0, 0, 0, 0.4);
