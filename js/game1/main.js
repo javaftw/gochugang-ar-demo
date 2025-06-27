@@ -177,6 +177,11 @@ function setupBackendEvents() {
         updatePlayerTotalUI(data.player, data.total);
     });
 
+    backend.on('playerTotal', (data) => {
+        console.log('Player total update:', data);
+        updatePlayerTotalUI(data.player, data.total);
+    });
+
     backend.on('dealerReveal', (data) => {
         console.log('Dealer reveals:', data);
         showMessage(`Dealer reveals ${data.holeCard}`, 2000);

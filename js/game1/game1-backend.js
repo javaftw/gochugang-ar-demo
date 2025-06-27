@@ -118,6 +118,20 @@ class FakeBackend {
         // Update totals for visible cards
         this.updateAllTotals();
 
+        // Emit total updates to frontend for all players
+        for (let playerId of [1, 2, 3]) {
+            this.emit('playerTotal', {
+                player: playerId,
+                total: this.gameState.players[playerId].total
+            });
+        }
+
+        // Emit dealer total (only visible cards)
+        this.emit('playerTotal', {
+            player: 'dealer',
+            total: this.gameState.players.dealer.total
+        });
+
         // Start player turns
         await this.delay(500);
         this.startPlayerTurns();
@@ -342,6 +356,17 @@ class FakeBackend {
     // Start next round
     nextRound() {
         this.gameState.currentRound++;
+
+        // Clear all player hands and reset status for new round
+        Object.values(this.gameState.players).forEach(player => {
+            player.cards = [];
+            player.status = 'waiting';
+            player.total = 0;
+            if (player.name === 'Dealer') {
+                player.holeCard = null;
+            }
+        });
+
         this.emit('gamePhase', {
             phase: 'next-round',
             round: this.gameState.currentRound,
