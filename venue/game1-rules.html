@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyutto Blackjack - Game Rules</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .section h2 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: #fff;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 8px;
+        }
+
+        .section h3 {
+            font-size: 18px;
+            margin: 20px 0 10px 0;
+            color: #fff;
+        }
+
+        .objective {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #4ecdc4;
+        }
+
+        .objective strong {
+            font-size: 18px;
+            color: #4ecdc4;
+        }
+
+        .card-example {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .bust-warning {
+            background: rgba(255, 107, 107, 0.2);
+            border: 2px solid #ff6b6b;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .bust-warning strong {
+            color: #ff6b6b;
+        }
+
+        .flow-step {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 3px solid #667eea;
+        }
+
+        .flow-step .step-number {
+            background: #667eea;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        .winning-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .winning-table th,
+        .winning-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .winning-table th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: bold;
+        }
+
+        .tip {
+            background: rgba(76, 205, 196, 0.2);
+            border: 1px solid #4ecdc4;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .tip::before {
+            content: "💡 ";
+            font-size: 16px;
+        }
+
+        .back-button {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.2s ease;
+        }
+
+        .back-button:hover {
+            background: #26a69a;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Gyutto Blackjack</h1>
+            <p>Quick & Simple Rules</p>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Game Objective</h2>
+            <div class="objective">
+                <strong>Get as close to 15 as possible without going over!</strong><br>
+                Beat the dealer and other players to win each round.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🃏 Card Values</h2>
+            <p>This game uses custom cards with simple values:</p>
+            <div style="margin: 15px 0;">
+                <span class="card-example">Card 1 = 1 point</span>
+                <span class="card-example">Card 2 = 2 points</span>
+                <span class="card-example">Card 3 = 3 points</span>
+                <span class="card-example">Card 4 = 4 points</span>
+                <span class="card-example">Card 5 = 5 points</span>
+                <span class="card-example">Card 6 = 6 points</span>
+            </div>
+            <div class="bust-warning">
+                <strong>⚠️ Bust Rule:</strong> If your total goes over 15, you automatically lose that round!
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎲 How to Play</h2>
+
+            <div class="flow-step">
+                <span class="step-number">1</span>
+                <strong>Initial Deal:</strong> Everyone gets 2 cards face up. The dealer gets 1 face up, 1 face down.
+            </div>
+
+            <div class="flow-step">
+                <span class="step-number">2</span>
+                <strong>Your Turn:</strong> Choose to <strong>HIT</strong> (take another card) or <strong>STAND</strong> (keep your current total).
+            </div>
+
+            <div class="flow-step">
+                <span class="step-number">3</span>
+                <strong>Other Players:</strong> Watch as Player 2 and Player 3 make their decisions automatically.
+            </div>
+
+            <div class="flow-step">
+                <span class="step-number">4</span>
+                <strong>Dealer's Turn:</strong> The dealer reveals their hidden card and hits until they reach 12 or higher.
+            </div>
+
+            <div class="flow-step">
+                <span class="step-number">5</span>
+                <strong>Scoring:</strong> Whoever is closest to 15 without going over wins the round!
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🏆 Winning Conditions</h2>
+            <table class="winning-table">
+                <tr>
+                    <th>Situation</th>
+                    <th>Result</th>
+                </tr>
+                <tr>
+                    <td>Your total is closest to 15</td>
+                    <td>🎉 You win the round!</td>
+                </tr>
+                <tr>
+                    <td>You go over 15</td>
+                    <td>💥 You bust and lose</td>
+                </tr>
+                <tr>
+                    <td>Dealer busts, you don't</td>
+                    <td>🎉 You win the round!</td>
+                </tr>
+                <tr>
+                    <td>Same total as dealer</td>
+                    <td>🤝 Tie (no points awarded)</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Game Structure</h2>
+            <h3>Tournament Format</h3>
+            <p>Each game consists of <strong>3 rounds</strong>. Win the most rounds to become the champion!</p>
+
+            <h3>Dealer Rules</h3>
+            <p>The dealer must hit (take cards) until their total is <strong>12 or higher</strong>, then they must stand.</p>
+
+            <div class="tip">
+                <strong>Strategy Tip:</strong> Since the target is only 15, you'll usually need 3+ cards to get close. Don't be afraid to hit on lower totals like 8 or 9!
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📱 Controls</h2>
+            <p><strong>HIT Button:</strong> Take another card and add it to your total</p>
+            <p><strong>STAND Button:</strong> Keep your current total and end your turn</p>
+            <p><em>Buttons are only active when it's your turn to play.</em></p>
+        </div>
+
+        <div style="text-align: center;">
+            <button class="back-button" onclick="history.back()">← Back to Game</button>
+        </div>
+    </div>
+</body>
+</html>
