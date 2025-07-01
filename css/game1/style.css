@@ -1,4 +1,6 @@
-/* Basic Reset and Mobile Setup */
+/* Adaptive Mobile-First Blackjack Styles */
+/* Designed for portrait mobile with perfect viewport fit */
+
 * {
     margin: 0;
     padding: 0;
@@ -7,48 +9,56 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+    background: #000000;
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile browsers */
     color: white;
-    overflow-x: hidden;
+    overflow: hidden; /* Prevent any scrolling */
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
 }
 
 .game-container {
+background: linear-gradient(135deg, #008000 0%, #002000 100%);
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    max-width: 420px;
-    margin: 0 auto;
-    padding: 10px;
+    height: 100vh;
+    height: 100dvh;
+    width: 100%;
+    padding: 1vh 2vw;
+    gap: 0.8vh;
 }
 
-/* Dealer Section */
+/* Dealer Section - Top */
 .dealer-section {
     background: rgba(0, 0, 0, 0.3);
-    border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 10px;
+    border-radius: 2vw;
+    padding: 1.5vh 3vw;
     text-align: center;
+    flex-shrink: 0;
 }
 
 .dealer-section h3 {
-    font-size: 18px;
-    margin-bottom: 10px;
+    font-size: 4vw;
+    margin-bottom: 1vh;
     opacity: 0.9;
+    font-weight: 600;
 }
 
 /* Other Players Section */
 .other-players-section {
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 10px;
+    border-radius: 2vw;
+    padding: 1.2vh 2vw;
+    flex-shrink: 0;
 }
 
 .other-players {
     display: flex;
     justify-content: space-around;
-    gap: 10px;
+    gap: 2vw;
 }
 
 .player {
@@ -57,43 +67,67 @@ body {
 }
 
 .player-name {
-    font-size: 14px;
+    font-size: 3.2vw;
     opacity: 0.8;
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 1vh;
+    font-weight: 500;
 }
 
-/* Main Player Section */
+/* Main Player Section - Takes remaining space */
 .main-player-section {
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 15px;
+    border-radius: 2vw;
+    padding: 2vh 3vw;
     text-align: center;
     flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0; /* Allow shrinking */
+    display: flex;
+    flex-direction: column;
 }
 
 .main-player-section h3 {
-    font-size: 20px;
-    margin-bottom: 15px;
+    font-size: 4.5vw;
+    margin-bottom: 1.5vh;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.main-player-cards {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2vw;
+    flex-wrap: wrap;
+    min-height: 0;
+}
+
+.main-player-total {
+    flex-shrink: 0;
+    margin-top: 1vh;
 }
 
 /* Action Buttons */
 .actions-section {
     display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
+    gap: 3vw;
+    flex-shrink: 0;
+    padding: 0 1vw;
 }
 
 .action-btn {
     flex: 1;
-    padding: 18px;
-    font-size: 18px;
+    padding: 2.2vh 0;
+    font-size: 4.2vw;
     font-weight: bold;
     border: none;
-    border-radius: 12px;
+    border-radius: 2vw;
     cursor: pointer;
     transition: all 0.2s ease;
+    min-height: 6vh;
+    touch-action: manipulation; /* Better touch response */
 }
 
 .hit-btn {
@@ -130,108 +164,109 @@ body {
 
 .hit-btn:disabled:hover,
 .hit-btn:disabled:active {
-    background: #ff6b6b; /* Maintain original color */
+    background: #ff6b6b;
 }
 
 .stand-btn:disabled:hover,
 .stand-btn:disabled:active {
-    background: #4ecdc4; /* Maintain original color */
+    background: #4ecdc4;
 }
 
-/* Status Section */
+/* Status Section - Bottom */
 .status-section {
     background: rgba(0, 0, 0, 0.4);
-    border-radius: 12px;
-    padding: 12px 20px;
+    border-radius: 2vw;
+    padding: 1.2vh 4vw;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 16px;
+    font-size: 3.8vw;
+    font-weight: 500;
+    flex-shrink: 0;
 }
 
-/* Card Areas */
+/* Card Areas - Adaptive sizing */
 .dealer-cards,
-.player-cards,
-.main-player-cards {
-    min-height: 60px;
+.player-cards {
+    min-height: 8vh;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    margin: 8px 0;
+    border-radius: 1.5vw;
+    margin: 1vh 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 8px;
+    gap: 1.5vw;
+    padding: 1vh 2vw;
     flex-wrap: wrap;
 }
 
 .main-player-cards {
-    min-height: 90px;
-    gap: 12px;
-    padding: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2vw;
+    padding: 1.5vh 2vw;
 }
 
-/* Individual Cards */
+/* Individual Cards - Responsive sizing */
 .card {
-    width: 45px;
-    height: 63px; /* 45 * 1.4 = 63 */
-    border-radius: 6px;
+    width: 11vw;
+    height: 15.4vw; /* Maintain 1.4 aspect ratio */
+    border-radius: 1.5vw;
     background: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0.5vh 2vh rgba(0, 0, 0, 0.3);
     transition: transform 0.2s ease;
     flex-shrink: 0;
 }
 
 .card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-0.5vh);
 }
 
 .card img {
     width: 100%;
     height: 100%;
-    border-radius: 6px;
+    border-radius: 1.5vw;
     object-fit: contain;
     display: block;
 }
 
 /* Main player cards are larger */
 .main-player-cards .card {
-    width: 55px;
-    height: 77px; /* 55 * 1.4 = 77 */
+    width: 14vw;
+    height: 19.6vw; /* Maintain 1.4 aspect ratio */
 }
 
 /* Other players have smaller cards */
 .player-cards .card {
-    width: 35px;
-    height: 49px; /* 35 * 1.4 = 49 */
+    width: 9vw;
+    height: 12.6vw; /* Maintain 1.4 aspect ratio */
 }
 
 /* Card totals */
 .card-total {
-    font-size: 16px;
+    font-size: 3.8vw;
     font-weight: bold;
-    margin-top: 8px;
-    padding: 4px 12px;
+    margin-top: 1vh;
+    padding: 0.8vh 3vw;
     background: rgba(0, 0, 0, 0.4);
-    border-radius: 12px;
+    border-radius: 3vw;
     display: inline-block;
 }
 
 .main-player-total .card-total {
-    font-size: 18px;
+    font-size: 4.2vw;
 }
 
 /* Empty state styling */
 .cards-empty {
-    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border: 0.3vw dashed rgba(255, 255, 255, 0.3);
     color: rgba(255, 255, 255, 0.5);
-    font-size: 14px;
+    font-size: 3vw;
 }
 
 /* Animation for new cards */
 @keyframes cardDeal {
     from {
-        transform: translateY(-20px) scale(0.8);
+        transform: translateY(-3vh) scale(0.8);
         opacity: 0;
     }
     to {
@@ -244,13 +279,184 @@ body {
     animation: cardDeal 0.3s ease-out;
 }
 
-/* Responsive adjustments */
-@media (max-height: 600px) {
+/* Landscape orientation adjustments */
+@media (orientation: landscape) {
     .game-container {
-        padding: 5px;
+        padding: 1vh 3vw;
+        gap: 0.6vh;
+    }
+
+    .dealer-section,
+    .other-players-section {
+        padding: 1vh 3vw;
     }
 
     .main-player-section {
-        padding: 15px;
+        padding: 1.5vh 3vw;
+    }
+
+    .action-btn {
+        padding: 1.8vh 0;
+        font-size: 3.8vw;
+        min-height: 5vh;
+    }
+
+    .card {
+        width: 9vw;
+        height: 12.6vw;
+    }
+
+    .main-player-cards .card {
+        width: 11vw;
+        height: 15.4vw;
+    }
+
+    .player-cards .card {
+        width: 7vw;
+        height: 9.8vw;
+    }
+}
+
+/* Very small screens */
+@media (max-height: 600px) {
+    .game-container {
+        gap: 0.5vh;
+        padding: 0.8vh 2vw;
+    }
+
+    .main-player-section h3 {
+        font-size: 4vw;
+        margin-bottom: 1vh;
+    }
+
+    .dealer-section h3 {
+        font-size: 3.5vw;
+    }
+
+    .action-btn {
+        font-size: 3.8vw;
+        padding: 1.8vh 0;
+        min-height: 5vh;
+    }
+}
+
+/* Overlay System for Game Events */
+.overlay-container {
+    position: absolute;
+    z-index: 1000;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.overlay-container.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.overlay-container.hide {
+    opacity: 0;
+    transform: scale(1.1);
+    transition: all 0.3s ease-in;
+}
+
+/* Full screen overlays */
+.overlay-fullscreen {
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+/* Section-specific overlays */
+.overlay-section {
+    border-radius: 2vw;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(2px);
+}
+
+/* Position overlays over specific player sections */
+.overlay-main-player {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.overlay-player-2 {
+    top: 0;
+    left: 0;
+    right: 50%;
+    bottom: 0;
+}
+
+.overlay-player-3 {
+    top: 0;
+    left: 50%;
+    right: 0;
+    bottom: 0;
+}
+
+.overlay-dealer {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* SVG styling inside overlays */
+.overlay-container img {
+    max-width: 60vw;
+    max-height: 40vh;
+    width: auto;
+    height: auto;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+}
+
+.overlay-fullscreen img {
+    max-width: 80vw;
+    max-height: 60vh;
+}
+
+.overlay-section img {
+    max-width: 25vw;
+    max-height: 20vh;
+}
+
+/* Pulsing animation for overlays */
+@keyframes overlayPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.overlay-container.pulse img {
+    animation: overlayPulse 1.5s ease-in-out infinite;
+}
+
+/* Ensure no horizontal overflow */
+@media (max-width: 320px) {
+    .game-container {
+        padding: 1vh 1.5vw;
+    }
+
+    .actions-section {
+        gap: 2vw;
+    }
+
+    .overlay-container img {
+        max-width: 70vw;
+        max-height: 35vh;
+    }
+
+    .overlay-section img {
+        max-width: 30vw;
+        max-height: 15vh;
     }
 }

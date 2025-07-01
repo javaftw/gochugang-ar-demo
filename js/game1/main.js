@@ -22,6 +22,102 @@ const standBtn = document.getElementById('stand-btn');
 const currentRoundEl = document.getElementById('current-round');
 const playerScoreEl = document.getElementById('player-score');
 
+// Overlay Management System
+const overlaySystem = {
+    activeOverlays: new Set(),
+
+    // Create overlay element
+    createOverlay(type, svgPath, isFullscreen = false) {
+        const overlay = document.createElement('div');
+        overlay.className = `overlay-container ${isFullscreen ? 'overlay-fullscreen' : 'overlay-section'}`;
+
+        const img = document.createElement('img');
+        img.src = svgPath;
+        img.alt = type;
+
+        overlay.appendChild(img);
+        return overlay;
+    },
+
+    // Show overlay with animation
+    showOverlay(type, target = 'fullscreen', duration = 2500, svgName = null) {
+        const svgPath = `../assets/svg/game1/${svgName || type}.svg`;
+        const isFullscreen = target === 'fullscreen';
+        const overlay = this.createOverlay(type, svgPath, isFullscreen);
+
+        // Position overlay based on target
+        if (isFullscreen) {
+            document.body.appendChild(overlay);
+        } else {
+            const targetElement = this.getTargetElement(target);
+            if (!targetElement) return null;
+
+            targetElement.style.position = 'relative';
+            overlay.classList.add(`overlay-${target}`);
+            targetElement.appendChild(overlay);
+        }
+
+        // Track active overlay
+        this.activeOverlays.add(overlay);
+
+        // Trigger show animation
+        requestAnimationFrame(() => {
+            overlay.classList.add('show');
+            if (duration > 3000) {
+                overlay.classList.add('pulse');
+            }
+        });
+
+        // Auto-hide after duration
+        setTimeout(() => {
+            this.hideOverlay(overlay);
+        }, duration);
+
+        return overlay;
+    },
+
+    // Hide overlay with animation
+    hideOverlay(overlay) {
+        if (!overlay || !this.activeOverlays.has(overlay)) return;
+
+        overlay.classList.remove('show', 'pulse');
+        overlay.classList.add('hide');
+
+        setTimeout(() => {
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+            this.activeOverlays.delete(overlay);
+        }, 300);
+    },
+
+    // Get target element for section overlays
+    getTargetElement(target) {
+        switch(target) {
+            case 'main-player':
+                return document.querySelector('.main-player-section');
+            case 'player-2':
+                return document.querySelector('.player-2');
+            case 'player-3':
+                return document.querySelector('.player-3');
+            case 'dealer':
+                return document.querySelector('.dealer-section');
+            default:
+                return null;
+        }
+    },
+
+    // Clear all overlays
+    clearAll() {
+        this.activeOverlays.forEach(overlay => {
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        });
+        this.activeOverlays.clear();
+    }
+};
+
 // Card Rendering Functions
 function createCardElement(value, faceUp = true) {
     const cardEl = document.createElement('div');
@@ -106,6 +202,9 @@ function clearAllHands() {
     document.querySelectorAll('.dealer-total, .main-player-total, .player-status').forEach(container => {
         container.innerHTML = '';
     });
+
+    // Clear any overlays
+    overlaySystem.clearAll();
 }
 
 function updateButtonStates() {
@@ -170,6 +269,11 @@ function setupBackendEvents() {
 
         if (data.action === 'bust') {
             showMessage(`${playerName} busted with ${data.total}!`, 2000);
+
+            // Show bust overlay
+            const target = data.player === 1 ? 'main-player' : `player-${data.player}`;
+            overlaySystem.showOverlay('bust', target, 2000);
+
         } else if (data.action === 'stand') {
             showMessage(`${playerName} stands with ${data.total}`, 1500);
         }
@@ -202,9 +306,15 @@ function setupBackendEvents() {
 
         // Show round results
         let message = `Round ${data.round} complete! `;
+        let overlayDelay = 1500; // Delay before showing overlay
+
         switch (data.results[1]) {
             case 'win':
                 message += 'You win! 🎉';
+                // Show round win overlay after message
+                setTimeout(() => {
+                    overlaySystem.showOverlay('win_round', 'fullscreen', 3000);
+                }, overlayDelay);
                 break;
             case 'lose':
                 message += 'You lose 😔';
@@ -215,6 +325,15 @@ function setupBackendEvents() {
             case 'bust':
                 message += 'You busted!';
                 break;
+        }
+
+        // Check for other player wins and show overlays
+        for (let playerId of [2, 3]) {
+            if (data.results[playerId] === 'win') {
+                setTimeout(() => {
+                    overlaySystem.showOverlay('winner', `player-${playerId}`, 2500);
+                }, overlayDelay + 500);
+            }
         }
 
         showMessage(message, 4000);
@@ -243,24 +362,36 @@ function setupBackendEvents() {
     backend.on('gameEnd', (data) => {
         console.log('Game end:', data);
         let message = 'Game Over! ';
+        let overlayDelay = 2000;
 
         if (data.winner === 1) {
             message += 'You are the champion! 🏆';
+            // Show game win overlay
+            setTimeout(() => {
+                overlaySystem.showOverlay('win_game', 'fullscreen', 4000);
+            }, overlayDelay);
         } else if (data.winner === 'tie') {
             message += 'It\'s a tie!';
         } else {
             message += `Player ${data.winner} wins!`;
+            // Show winner overlay for the winning player
+            if (data.winner !== 'tie') {
+                setTimeout(() => {
+                    overlaySystem.showOverlay('winner', `player-${data.winner}`, 3000);
+                }, overlayDelay);
+            }
         }
 
         showMessage(message, 5000);
 
-        // Enable restart after delay
+        // Enable restart after delay (accounting for overlays)
+        const restartDelay = data.winner === 1 ? 6500 : 5500;
         setTimeout(() => {
             showMessage('Tap HIT to start new game', 0);
             hitBtn.disabled = false;
             hitBtn.style.opacity = '1';
             hitBtn.textContent = 'NEW GAME';
-        }, 5000);
+        }, restartDelay);
     });
 }
 
