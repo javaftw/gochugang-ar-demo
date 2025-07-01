@@ -7,39 +7,54 @@
    viewBox="0 0 100.623 140.623"
    version="1.1"
    id="svg1"
-   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
-   sodipodi:docname="2f.svg"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
-  <sodipodi:namedview
-     id="namedview1"
-     pagecolor="#ffffff"
-     bordercolor="#999999"
-     borderopacity="1"
-     inkscape:showpageshadow="0"
-     inkscape:pageopacity="0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     inkscape:document-units="mm"
-     inkscape:zoom="0.78305976"
-     inkscape:cx="220.92822"
-     inkscape:cy="395.24442"
-     inkscape:window-width="1920"
-     inkscape:window-height="1057"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="layer1" />
   <defs
-     id="defs1" />
+     id="defs1">
+    <linearGradient
+       id="linearGradient4">
+      <stop
+         style="stop-color:#ededed;stop-opacity:1;"
+         offset="0"
+         id="stop4" />
+      <stop
+         style="stop-color:#f5f5f5;stop-opacity:1;"
+         offset="1"
+         id="stop5" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2">
+      <stop
+         style="stop-color:#cfcfcf;stop-opacity:1;"
+         offset="0"
+         id="stop2" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="1"
+         id="stop3" />
+    </linearGradient>
+    <linearGradient
+       xlink:href="#linearGradient2"
+       id="linearGradient3"
+       x1="86.426285"
+       y1="112.67091"
+       x2="9.0498734"
+       y2="25.113398"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       xlink:href="#linearGradient4"
+       id="linearGradient5"
+       x1="51.358032"
+       y1="127.82946"
+       x2="51.358028"
+       y2="17.194757"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
   <g
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
      id="layer1">
     <rect
-       style="fill:#ffffff;stroke:#000000;stroke-width:0.623001;stroke-linecap:round;stroke-linejoin:round;paint-order:markers fill stroke"
+       style="fill:url(#linearGradient3);stroke:none;stroke-width:0.623001;stroke-linecap:round;stroke-linejoin:round;paint-order:markers fill stroke;fill-opacity:1"
        id="rect1"
        width="100"
        height="140"
@@ -47,16 +62,46 @@
        y="0.31150049"
        rx="2.7030716"
        ry="2.7030716" />
+    <rect
+       style="fill:url(#linearGradient5);stroke:none;stroke-width:0.623001;stroke-linecap:round;stroke-linejoin:round;paint-order:markers fill stroke;fill-opacity:1"
+       id="rect2"
+       width="97.264694"
+       height="137.41437"
+       x="1.4913578"
+       y="1.5113554"
+       rx="1.8687865"
+       ry="1.8687865" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:42.4511px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.06128"
-       x="36.920586"
-       y="85.753334"
-       id="text1"><tspan
-         sodipodi:role="line"
-         id="tspan1"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'DejaVu Serif';-inkscape-font-specification:'DejaVu Serif';stroke-width:1.06128"
-         x="36.920586"
-         y="85.753334">6</tspan></text>
+       x="11.186439"
+       y="88.680748"
+       id="text5"><tspan
+         x="11.186439"
+         y="88.680748"
+         id="tspan8" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:42.4511px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.06128"
+       x="11.638932"
+       y="101.80307"
+       id="text9"><tspan
+         id="tspan9"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Poppins;-inkscape-font-specification:Poppins;stroke-width:1.06128"
+         x="11.638932"
+         y="101.80307" /></text>
+    <path
+       id="rect9"
+       style="fill:#ff0000;fill-opacity:1;stroke-width:0.256518;stroke-linecap:round;stroke-linejoin:round;paint-order:markers fill stroke"
+       d="m 50.116155,61.637964 c 3.68054,-13.34842 31.91675,-4.93266 9.55361,15.08134 l -9.55361,8.55006 -9.55361,-8.55006 c -22.05835,-19.74122 5.17936,-28.352491 9.55361,-15.08134 z" />
+    <path
+       id="path15"
+       style="fill:#ff0000;fill-opacity:1;stroke-width:0.112562;stroke-linecap:round;stroke-linejoin:round;paint-order:markers fill stroke"
+       d="m 19.140618,39.869264 c 1.615044,-5.857382 14.005291,-2.164485 4.192198,6.617794 l -4.192198,3.751829 -4.192199,-3.751829 c -9.6793434,-8.66258 2.272757,-12.441265 4.192199,-6.617794 z" />
+    <path
+       style="font-size:25.3338px;line-height:1.25;font-family:Poppins;-inkscape-font-specification:Poppins;fill:#ff0000;stroke-width:0.844898"
+       d="m 23.368414,13.863999 q -0.371751,-1.554606 -1.351829,-2.33191 -0.980078,-0.777303 -2.737463,-0.777303 -2.669868,0 -3.987906,2.061544 -1.318039,2.027748 -1.385634,6.75916 0.878693,-1.487016 2.568483,-2.298115 1.68979,-0.811099 3.649946,-0.811099 2.230521,0 3.920311,0.980078 1.723594,0.946283 2.669868,2.771256 0.980078,1.824973 0.980078,4.359658 0,2.365706 -0.946274,4.224475 -0.912483,1.858769 -2.737462,2.940234 -1.82498,1.04767 -4.393449,1.04767 -3.480979,0 -5.474926,-1.520811 -1.960156,-1.554607 -2.771253,-4.359658 -0.777307,-2.805051 -0.777307,-6.99573 0,-12.3692632 8.719316,-12.3692632 3.37958,0 5.305945,1.824973 1.960156,1.8249732 2.298117,4.4948412 z m -4.089292,5.846674 q -2.061541,0 -3.514769,1.250444 -1.419425,1.216649 -1.419425,3.548559 0,2.33191 1.318039,3.717538 1.351829,1.351832 3.751332,1.351832 2.129136,0 3.345789,-1.318036 1.250444,-1.318036 1.250444,-3.514763 0,-2.298115 -1.216653,-3.649947 -1.182849,-1.385627 -3.514757,-1.385627 z"
+       id="text26"
+       aria-label="6" />
   </g>
 </svg>
