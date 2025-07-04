@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         navigation.classList.remove('hidden');
         navigation.classList.add('show');
-    }, 4500); // Delay to ensure animations are finished
+    }, 1500); // Delay to ensure animations are finished
 
     // Add click handler for the navigation button
     const navButton = document.querySelector('.nav-button');

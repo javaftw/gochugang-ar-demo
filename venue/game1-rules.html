@@ -13,7 +13,12 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #000000 0%, #440000 100%);
+            background-color: #000;
+            background-image: url('../assets/img/bg-dark1.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: repeat;
+            background-attachment: fixed;
             min-height: 100vh;
             color: white;
             line-height: 1.6;
@@ -72,12 +77,12 @@
             padding: 20px;
             border-radius: 8px;
             margin: 15px 0;
-            border-left: 4px solid #4ecdc4;
+            border-left: 4px solid #ffdd00;
         }
 
         .objective strong {
             font-size: 18px;
-            color: #4ecdc4;
+            color: #ffdd00;
         }
 
         .card-example {
@@ -158,7 +163,7 @@
         }
 
         .back-button {
-            background: #4ecdc4;
+            background: #009900;
             color: white;
             border: none;
             padding: 12px 24px;
@@ -170,7 +175,7 @@
         }
 
         .back-button:hover {
-            background: #26a69a;
+            background: #00dd00;
         }
 
         @media (max-width: 480px) {
@@ -196,7 +201,7 @@
         </div>
 
         <div class="section">
-            <h2>🎯 Game Objective</h2>
+            <h2>Objective</h2>
             <div class="objective">
                 <strong>Get as close to 15 as possible without going over!</strong><br>
                 Beat the dealer and other players to win each round.
@@ -204,7 +209,7 @@
         </div>
 
         <div class="section">
-            <h2>🃏 Card Values</h2>
+            <h2>Card Values</h2>
             <div style="margin: 15px 0;">
                 <span class="card-example">Card 1 = 1 point</span>
                 <span class="card-example">Card 2 = 2 points</span>
@@ -214,12 +219,12 @@
                 <span class="card-example">Card 6 = 6 points</span>
             </div>
             <div class="bust-warning">
-                <strong>⚠️ Bust Rule:</strong> If your total goes over 15, you automatically lose that round!
+                <strong>⚠️ Bust Rule:</strong> If your total goes over 15, you <b>bust</b> and automatically lose that round!
             </div>
         </div>
 
         <div class="section">
-            <h2>🎲 How to Play</h2>
+            <h2>How to Play</h2>
 
             <div class="flow-step">
                 <span class="step-number">1</span>
@@ -236,7 +241,7 @@
             <div class="flow-step">
                 <span class="step-number">3</span>
                 <strong>Other Players:</strong>
-                <p>Watch as Player 2 and Player 3 make their decisions automatically.</p>
+                <p>Each player gets a turn to HIT or STAND.</p>
             </div>
 
             <div class="flow-step">
@@ -279,9 +284,9 @@
         </div>
 
         <div class="section">
-            <h2>🎯 Game Structure</h2>
+            <h2>Game Structure</h2>
             <h3>Tournament Format</h3>
-            <p>Each game consists of <strong>3 rounds</strong>. Win the most rounds to become the champion!</p>
+            <p>Each game consists of <strong>3 rounds</strong>. Win the most rounds to become the <b>game winner</b> and stand a chance to become a <b>prize winner</b>!</p>
 
             <h3>Dealer Rules</h3>
             <p>The dealer must hit (take cards) until their total is <strong>12 or higher</strong>, then they must stand.</p>
