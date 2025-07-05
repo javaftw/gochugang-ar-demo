@@ -131,12 +131,12 @@ background: linear-gradient(135deg, #008000 0%, #002000 100%);
 }
 
 .hit-btn {
-    background: #ff6b6b;
+    background: #ff9900;
     color: white;
 }
 
 .hit-btn:hover, .hit-btn:active {
-    background: #ff5252;
+    background: #ffcc00;
     transform: scale(0.98);
 }
 
@@ -164,7 +164,7 @@ background: linear-gradient(135deg, #008000 0%, #002000 100%);
 
 .hit-btn:disabled:hover,
 .hit-btn:disabled:active {
-    background: #ff6b6b;
+    background: #ff9900;
 }
 
 .stand-btn:disabled:hover,
@@ -202,7 +202,7 @@ background: linear-gradient(135deg, #008000 0%, #002000 100%);
 
 .main-player-cards {
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 2vw;
+    border-radius: 0.25vw;
     padding: 1.5vh 2vw;
 }
 
@@ -210,9 +210,9 @@ background: linear-gradient(135deg, #008000 0%, #002000 100%);
 .card {
     width: 11vw;
     height: 15.4vw; /* Maintain 1.4 aspect ratio */
-    border-radius: 1.5vw;
+    border-radius: 0.5vw;
     background: white;
-    box-shadow: 0 0.5vh 2vh rgba(0, 0, 0, 0.3);
+    box-shadow: 0.5vh 0.5vh 0.75vh rgba(0, 0, 0, 0.5);
     transition: transform 0.2s ease;
     flex-shrink: 0;
 }
@@ -248,7 +248,7 @@ background: linear-gradient(135deg, #008000 0%, #002000 100%);
     margin-top: 1vh;
     padding: 0.8vh 3vw;
     background: rgba(0, 0, 0, 0.4);
-    border-radius: 3vw;
+    border-radius: 0.25vw;
     display: inline-block;
 }
 
